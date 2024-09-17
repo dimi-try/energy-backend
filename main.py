@@ -7,8 +7,9 @@ from fastapi import FastAPI, HTTPException, Request, Depends  # Импорт Fas
 from fastapi.middleware.cors import CORSMiddleware  # Импорт CORS middleware для управления CORS
 from dotenv import load_dotenv  # Импорт функции для загрузки переменных окружения из .env файла
 from pydantic import BaseModel  # Импорт BaseModel для валидации данных
-from typing import Optional  # Импорт Optional для необязательных полей
+from typing import Optional, List  # Импорт Optional и List для типов данных
 from jose import JWTError, jwt  # Импорт JWT для генерации и проверки токенов
+import asyncpg
 
 # Загрузка переменных окружения из файла .env
 load_dotenv()
@@ -17,6 +18,7 @@ load_dotenv()
 BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 SECRET_KEY = os.getenv('SECRET_KEY')  # Секретный ключ для JWT
 ALGORITHM = os.getenv('ALGORITHM')  # Алгоритм хэширования для JWT
+DATABASE_URL = os.getenv('DATABASE_URL')  # URL базы данных PostgreSQL
 
 # Создание экземпляра FastAPI приложения
 app = FastAPI()
@@ -29,6 +31,17 @@ app.add_middleware(
     allow_methods=["*"],  # Разрешение всех методов HTTP (GET, POST и т.д.)
     allow_headers=["*"],  # Разрешение всех заголовков HTTP
 )
+
+# Модели для сериализации данных
+class BrandModel(BaseModel):
+    id: int
+    name: str
+
+class EnergeticModel(BaseModel):
+    id: int
+    name: Optional[str]
+    brand: BrandModel
+    rating: float
 
 # Функция для генерации JWT токена
 def create_access_token(data: dict, expires_delta: Optional[float] = None):
@@ -105,6 +118,58 @@ async def authorization_test(request: Request):
 @app.get("/auth/protected")
 async def protected_endpoint(token: str = Depends(verify_token)):
     return {"message": "Protected content", "user_data": token}
+
+# Эндпоинт для получения списка энергетиков с брендами и рейтингами
+@app.get("/api/energetics", response_model=List[EnergeticModel])
+async def get_energetics():
+    query = """
+    SELECT 
+        e.id AS energy_id, 
+        e.name AS energy_name, 
+        b.id AS brand_id, 
+        b.name AS brand_name, 
+        COALESCE(AVG(r.rating), 0) AS average_rating
+    FROM 
+        Energetics e
+    JOIN 
+        Brands b ON e.brand_id = b.id
+    LEFT JOIN 
+        Ratings r ON e.id = r.energy_id
+    GROUP BY 
+        e.id, b.id
+    LIMIT 5;
+    """
+    
+    try:
+        conn = await app.state.db_pool.acquire()  # Получаем соединение из пула
+        rows = await conn.fetch(query)
+        await app.state.db_pool.release(conn)  # Возвращаем соединение в пул
+
+        energetics = []
+        for row in rows:
+            energetics.append({
+                "id": row["energy_id"],
+                "name": row["energy_name"],
+                "brand": {
+                    "id": row["brand_id"],
+                    "name": row["brand_name"]
+                },
+                "rating": float(row["average_rating"])
+            })
+
+        return energetics
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Создаем пул соединений при запуске приложения
+@app.on_event("startup")
+async def startup():
+    app.state.db_pool = await asyncpg.create_pool(DATABASE_URL)
+
+# Закрываем пул соединений при остановке приложения
+@app.on_event("shutdown")
+async def shutdown():
+    await app.state.db_pool.close()
 
 # Запуск сервера
 if __name__ == "__main__":
