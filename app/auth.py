@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from jose import jwt, JWTError
 from dotenv import load_dotenv
 import urllib.parse
+from typing import Optional
 
 load_dotenv()
 
