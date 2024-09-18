@@ -35,3 +35,9 @@ class RatingOrm(Base):
     created_at: Mapped[Optional[str]] = mapped_column(TIMESTAMP, nullable=False)
     is_history: Mapped[bool] = mapped_column(Boolean, default=False)
     original_rating_id: Mapped[Optional[int]] = mapped_column(ForeignKey("ratings.id"))
+
+class UserOrm(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)

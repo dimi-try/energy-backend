@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Request, Depends, HTTPException
-from app.repository import EnergeticRepository
-from app.schemas import EnergeticModel
+from fastapi import APIRouter, Request, Depends, HTTPException, Path
+from app.repository import EnergeticRepository, RatingRepository, BrandRepository, UserRepository
+from app.schemas import EnergeticModel, RatingModel, BrandModel, UserModel
 from app.auth import create_access_token, verify_token, validate
 from typing import List
 import time
+import urllib.parse
 
 api_router = APIRouter()
 
@@ -36,3 +37,44 @@ async def protected_endpoint(token: str = Depends(verify_token)):
 @api_router.get("/api/energetics", response_model=List[EnergeticModel])
 async def get_energetics():
     return await EnergeticRepository.get_all()
+
+@api_router.post("/api/ratings")
+async def add_rating(rating: RatingModel, token: str = Depends(verify_token)):
+    user_id = token["sub"]
+    await RatingRepository.add_rating(user_id, rating)
+    return {"success": True, "message": "Rating added"}
+
+@api_router.put("/api/ratings/{rating_id}")
+async def update_rating(rating_id: int, rating: RatingModel, token: str = Depends(verify_token)):
+    user_id = token["sub"]
+    await RatingRepository.update_rating(rating_id, user_id, rating)
+    return {"success": True, "message": "Rating updated"}
+
+@api_router.delete("/api/ratings/{rating_id}")
+async def delete_rating(rating_id: int, token: str = Depends(verify_token)):
+    user_id = token["sub"]
+    await RatingRepository.delete_rating(rating_id, user_id)
+    return {"success": True, "message": "Rating deleted"}
+
+@api_router.get("/api/ratings/{energy_id}", response_model=List[RatingModel])
+async def get_ratings_by_energy(energy_id: int):
+    return await RatingRepository.get_ratings_by_energy(energy_id)
+
+@api_router.get("/api/ratings/user/{user_id}", response_model=List[RatingModel])
+async def get_ratings_by_user(user_id: int):
+    return await RatingRepository.get_ratings_by_user(user_id)
+
+@api_router.get("/api/brands", response_model=List[BrandModel])
+async def get_brands():
+    return await BrandRepository.get_all()
+
+@api_router.get("/api/brand/{brand_id}/energetics", response_model=List[EnergeticModel])
+async def get_energetics_by_brand(brand_id: int = Path(..., description="ID бренда")):
+    energetics = await EnergeticRepository.get_by_brand_id(brand_id)
+    if not energetics:
+        raise HTTPException(status_code=404, detail="No energetics found for the given brand ID")
+    return energetics
+
+@api_router.get("/api/users/{user_id}", response_model=UserModel)
+async def get_user_by_id(user_id: int):
+    return await UserRepository.get_user_by_id(user_id)
