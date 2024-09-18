@@ -1,71 +1,43 @@
-import hmac
-import hashlib
-import time
-import os
-import urllib.parse
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.router import api_router  # Импорт маршрутов
+from app.database import create_db, close_db  # Импорт функций для работы с базой данных
+import sys
+import os
 
-BOT_TOKEN = 'your-token'  # Получаем токен бота из переменных окружения
+# Добавляем путь к текущему файлу в системный путь (sys.path), чтобы модуль мог находить другие файлы проекта
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+# Инициализация экземпляра FastAPI
 app = FastAPI()
 
-# Включение CORS для всех источников
+# Настройка CORS (Cross-Origin Resource Sharing) для управления запросами из других доменов
+# Этот middleware позволяет запросы с любых источников ("*") и позволяет использовать куки и заголовки
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["*"],  # Разрешить запросы с любых источников (можно ограничить список доменов)
+    allow_credentials=True,  # Разрешить отправку куки
+    allow_methods=["*"],  # Разрешить любые HTTP методы (GET, POST, PUT, DELETE и т.д.)
+    allow_headers=["*"],  # Разрешить любые заголовки
 )
 
-# Функция для валидации данных
-def validate(hash_str, init_data):
-    # Парсинг данных из строки
-    parsed_query = urllib.parse.parse_qs(init_data)
+# Подключение роутеров к приложению
+app.include_router(api_router)
 
-    # Сортировка данных и создание строки для проверки хэша
-    init_data = sorted([
-        chunk.split("=")
-        for chunk in urllib.parse.unquote(init_data).split("&")
-        if not chunk.startswith("hash=")
-    ], key=lambda x: x[0])
+# Обработчик события старта приложения
+@app.on_event("startup")
+async def startup_event():
+    # Функция для инициализации базы данных при запуске приложения
+    await create_db()
 
-    init_data = "\n".join([f"{rec[0]}={rec[1]}" for rec in init_data])
+# Обработчик события завершения работы приложения
+@app.on_event("shutdown")
+async def shutdown_event():
+    # Функция для закрытия подключения к базе данных при остановке приложения
+    await close_db()
 
-    # Создание секретного ключа и вычисление хэша
-    secret_key = hmac.new("WebAppData".encode(), BOT_TOKEN.encode(), hashlib.sha256).digest()
-    data_check = hmac.new(secret_key, init_data.encode(), hashlib.sha256)
-
-    # Сравнение вычисленного хэша с переданным
-    return data_check.hexdigest() == hash_str
-
-# Эндпоинт для авторизации
-@app.post("/auth/verify")
-async def authorization_test(request: Request):
-    # print(request)
-    # Получение данных из запроса
-    authorization_data = await request.json()
-    # print(authorization_data)
-    # Парсинг данных для извлечения hash и auth_date
-    parsed_query = urllib.parse.parse_qs(authorization_data)
-    hash_received = parsed_query.get('hash', [None])[0]
-    auth_date = int(parsed_query.get('auth_date', [0])[0])
-
-    # Проверка наличия hash
-    if not hash_received:
-        raise HTTPException(status_code=400, detail="Hash not provided")
-
-    # Валидация данных
-    if validate(hash_received, authorization_data):
-        current_unix_time = int(time.time())
-        timeout_seconds = 3600
-        if current_unix_time - auth_date > timeout_seconds:
-            raise HTTPException(status_code=403, detail="Verification failed due to timeout")
-        return {"success": True, "message": "Verification successful"}
-    else:
-        raise HTTPException(status_code=403, detail="Verification failed")
-
+# Основная точка входа в приложение, запуск через uvicorn
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    # Запуск приложения с указанием адреса (localhost) и порта (8000), с автообновлением кода (reload=True)
+    uvicorn.run(app, host="127.0.0.1", port=8000, reload=True)
