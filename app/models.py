@@ -1,29 +1,31 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
+
 from .database import Base
-
-class Item(Base):
-    __tablename__ = "items"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    description = Column(String, index=True)
-    
 # from sqlalchemy.orm import Mapped, mapped_column
 # from sqlalchemy import Integer, String, Text, Numeric, ForeignKey, TIMESTAMP, Boolean
 # from sqlalchemy.ext.declarative import declarative_base
 # from typing import Optional
 
-# # Создаем базовый класс для ORM-моделей
-# Base = declarative_base()
+class Brand(Base):
+    __tablename__ = 'brand'
 
-# # ORM-модель для таблицы "brands" (бренды энергетиков)
-# class BrandOrm(Base):
-#     __tablename__ = "brands"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(length=64), unique=True, index=True)
 
-#     # Уникальный идентификатор бренда (первичный ключ)
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     # Название бренда, строка длиной до 255 символов, уникальная и обязательная для заполнения
-#     name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    energies = relationship("Energy", back_populates="brand")
+
+
+class Energy(Base):
+    __tablename__ = 'energy'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(length=64), unique=True, index=True)  
+    brand_id = Column(Integer, ForeignKey('brand.id'), nullable=False)
+    description = Column(String)
+
+    # Определение отношения между таблицами
+    brand = relationship("Brand", back_populates="energies")
 
 # # ORM-модель для таблицы "energetics" (энергетики)
 # class EnergeticOrm(Base):

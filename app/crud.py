@@ -1,12 +1,23 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
 
-def get_item(db: Session, item_id: int):
-    return db.query(models.Item).filter(models.Item.id == item_id).first()
+# ЗДЕСЬ ПРОИСХОДИТ ВЗАИМОДЕЙСТВИЕ С БАЗОЙ ДАННЫХ
 
-def create_item(db: Session, item: schemas.ItemCreate):
-    db_item = models.Item(name=item.name, description=item.description)
-    db.add(db_item)
-    db.commit()
-    db.refresh(db_item)
-    return db_item
+# ===================== CRUD ОППЕРАЦИИ С ТАБЛИЦЕЙ BRAND =====================
+
+# Функция получения элемента по его id
+def get_brand(db: Session, brand_id: int):
+    return db.query(models.Brand).filter(models.Brand.id == brand_id).first()
+
+# Функция создания элемента
+# def create_brand(db: Session, brand: schemas.BrandCreate):
+#     db_brand = models.Brand(name=brand.name, description=brand.description)
+#     db.add(db_brand)
+#     db.commit()
+#     db.refresh(db_brand)
+#     return db_brand
+
+# ===================== CRUD ОППЕРАЦИИ С ТАБЛИЦЕЙ ENERGY =====================
+
+def get_energy(db: Session, brand_id: int):
+    return db.query(models.Brand).filter(models.Brand.id == brand_id).first()

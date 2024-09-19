@@ -1,38 +1,40 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, constr
+from typing import Optional
 
-class ItemBase(BaseModel):
-    name: str
-    description: str
 
-class ItemCreate(ItemBase):
+# =============== БРЕНДЫ ===============
+class BrandBase(BaseModel):
+    name: constr(max_length=64)
+
+class BrandCreate(BrandBase):
     pass
 
-class Item(ItemBase):
+class Brand(BrandBase):
     id: int
 
     class Config:
         orm_mode = True
+        from_attributes = True
 
-# from pydantic import BaseModel
-# from typing import Optional
+# =============== ЭНЕРГЕТИКИ ===============
+class EnergyBase(BaseModel):
+    name: constr(max_length=64)
+    brand_id: int
+    description: Optional[str] = None
 
-# # Pydantic модель для представления бренда (Brand)
-# class BrandModel(BaseModel):
-#     # Уникальный идентификатор бренда
-#     id: int
-#     # Название бренда
-#     name: str
+# Схема для создания новой записи
+class EnergyCreate(EnergyBase):
+    pass
 
-# # Pydantic модель для представления энергетика (Energetic)
-# class EnergeticModel(BaseModel):
-#     # Уникальный идентификатор энергетика
-#     id: int
-#     # Название энергетика (необязательное поле, может быть None)
-#     name: Optional[str]
-#     # Вложенная модель бренда (BrandModel) с информацией о бренде, к которому принадлежит энергетик
-#     brand: BrandModel
-#     # Средняя оценка (рейтинг) энергетика, представлена как число с плавающей точкой
-#     rating: float
+# Схема для представления данных
+class Energy(EnergyBase):
+    id: int
+    brand: Brand
+
+    class Config:
+        orm_mode = True
+        from_attributes = True 
+
 
 # # Pydantic модель для представления рейтинга и отзыва (Rating)
 # class RatingModel(BaseModel):
