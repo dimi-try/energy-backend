@@ -19,5 +19,24 @@ def get_brand(db: Session, brand_id: int):
 
 # ===================== CRUD ОППЕРАЦИИ С ТАБЛИЦЕЙ ENERGY =====================
 
-def get_energy(db: Session, brand_id: int):
-    return db.query(models.Brand).filter(models.Brand.id == brand_id).first()
+def get_energy(db: Session, energy_id: int):
+    return db.query(models.Energy).filter(models.Energy.id == energy_id).first()
+
+# Создание нового энергетика
+def create_energy(db: Session, energy: schemas.EnergyCreate):
+    db_energy = models.Energy(
+        name=energy.name,
+        brand_id=energy.brand_id,
+        description=energy.description
+    )
+    db.add(db_energy)
+    db.commit()
+    db.refresh(db_energy)
+    return db_energy
+
+
+# ЕПТ! ТУТ УЖЕ НАСТРОЕНА ПАГИНАЦИЯ!?!?
+#GET /energy/ — получить список энергетиков с возможностью пагинации (параметры skip и limit).
+# Получение всех энергетиков
+def get_energies(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Energy).offset(skip).limit(limit).all()
