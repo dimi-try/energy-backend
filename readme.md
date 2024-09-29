@@ -2,15 +2,13 @@
 # База энов
 ## _Величайшая база энов в истории человечества_
 
-Разработано by Style Inc (c)
-
-Разработчики
-
+Developed by Stylua Inc (c)
+Developers 
 - [Jenkneo](https://github.com/Jenkneo)
 - [nuafirytiasewo](https://github.com/nuafirytiasewo)
 
-Технологии 
-***Бля, nuafirytiasewo, ебани сюда картинок с Python, sqlalhemy, fastapi и прочей хуйни которая в нашем проекте используется***
+💻 Languages and Tools :
+[![Технологии](https://skillicons.dev/icons?i=fastapi,py,postgres)](https://skillicons.dev)
 
 ## Общая структура проекта
 
