@@ -36,7 +36,7 @@ def create_energy(db: Session, energy: schemas.EnergyCreate):
 
 
 # ЕПТ! ТУТ УЖЕ НАСТРОЕНА ПАГИНАЦИЯ!?!?
-#GET /energy/ — получить список энергетиков с возможностью пагинации (параметры skip и limit).
+# GET /energy/ — получить список энергетиков с возможностью пагинации (параметры skip и limit).
 # Получение всех энергетиков
 def get_energies(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Energy).offset(skip).limit(limit).all()

@@ -3,7 +3,9 @@
 ## _Величайшая база энов в истории человечества_
 
 Разработано by Style Inc (c)
-Разработчики 
+
+Разработчики
+
 - [Jenkneo](https://github.com/Jenkneo)
 - [nuafirytiasewo](https://github.com/nuafirytiasewo)
 
@@ -12,7 +14,6 @@
 
 ## Общая структура проекта
 
-После скачивания проекта установите все зависимости
 ```sh
 my_project/
 │

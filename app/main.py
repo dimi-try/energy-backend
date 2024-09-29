@@ -9,4 +9,4 @@ app.include_router(api_router)
 # Пример главной страницы
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"Welcome to": "energy database!"}

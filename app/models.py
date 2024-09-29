@@ -27,27 +27,6 @@ class Energy(Base):
     # Определение отношения между таблицами
     brand = relationship("Brand", back_populates="energies")
 
-# # ORM-модель для таблицы "energetics" (энергетики)
-# class EnergeticOrm(Base):
-#     __tablename__ = "energetics"
-
-#     # Уникальный идентификатор энергетика (первичный ключ)
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     # Название энергетика, строка длиной до 255 символов, не обязательное поле
-#     name: Mapped[Optional[str]] = mapped_column(String(255))
-#     # Внешний ключ на таблицу "brands", указывает на бренд энергетика
-#     brand_id: Mapped[int] = mapped_column(ForeignKey("brands.id"))
-#     # Внешний ключ на таблицу "categories", указывает на категорию энергетика (не обязательное поле)
-#     category_id: Mapped[Optional[int]] = mapped_column(ForeignKey("categories.id"))
-#     # Описание энергетика, текстовое поле (не обязательное)
-#     description: Mapped[Optional[str]] = mapped_column(Text)
-#     # Состав энергетика, текстовое поле (не обязательное)
-#     ingredients: Mapped[Optional[str]] = mapped_column(Text)
-#     # URL изображения энергетика, строка длиной до 255 символов (не обязательное)
-#     image_url: Mapped[Optional[str]] = mapped_column(String(255))
-#     # Внешний ключ на таблицу "price_categories", указывает на ценовую категорию энергетика (не обязательное поле)
-#     price_category_id: Mapped[Optional[int]] = mapped_column(ForeignKey("price_categories.id"))
-
 # # ORM-модель для таблицы "ratings" (рейтинги и отзывы пользователей)
 # class RatingOrm(Base):
 #     __tablename__ = "ratings"
