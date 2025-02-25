@@ -12,7 +12,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Можно использовать ["*"] для разрешения всех источников (не рекомендуется для продакшена)
+    allow_origins=["*"], # использовать allow_origins=origins на продакшне
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

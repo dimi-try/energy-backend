@@ -13,7 +13,6 @@ class Brand(BrandBase):
     id: int
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 # =============== ЭНЕРГЕТИКИ ===============
@@ -31,5 +30,4 @@ class Energy(EnergyBase):
     brand: Brand
 
     class Config:
-        orm_mode = True
-        from_attributes = True 
+        from_attributes = True
