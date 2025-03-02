@@ -1,53 +1,23 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.sqlite"
+# Загружаем переменные окружения
+load_dotenv()
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+# Получаем строку подключения к БД
+DATABASE_URL = os.getenv("DATABASE_URL")
 
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL не задан! Проверь .env файл или переменные окружения.")
+
+# Создаём движок для PostgreSQL
+engine = create_engine(DATABASE_URL)
+
+# Создаём фабрику сессий
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# Базовый класс для моделей
 Base = declarative_base()
-
-# from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-# from sqlalchemy.orm import DeclarativeBase, sessionmaker
-# import os
-# from dotenv import load_dotenv
-
-# # Загружаем переменные окружения из файла .env
-# load_dotenv()
-
-# # Получаем URL базы данных из переменной окружения
-# DATABASE_URL = os.getenv('DATABASE_URL')
-
-# # Создаем асинхронный движок для работы с базой данных с помощью SQLAlchemy
-# # create_async_engine создаёт движок для асинхронного взаимодействия с базой данных
-# engine = create_async_engine(DATABASE_URL)
-
-# # Создаем фабрику асинхронных сессий для взаимодействия с базой данных
-# # async_sessionmaker - это фабрика для создания сессий (подключений к базе)
-# # expire_on_commit=False - предотвращает автоматическое "устаревание" данных после коммита, что полезно для длительных операций
-# async_session = async_sessionmaker(engine, expire_on_commit=False)
-
-
-# # Базовый класс для всех моделей базы данных (ORM моделей)
-# # Все ORM-модели будут наследоваться от этого класса
-# class Base(DeclarativeBase):
-#     pass
-
-
-# # Функция для создания всех таблиц в базе данных, если они не существуют
-# # Используется метод run_sync для выполнения синхронной операции с метаданными модели
-# # Base.metadata.create_all создает таблицы для всех моделей, унаследованных от Base
-# async def create_db():
-#     async with engine.begin() as conn:  # Открываем соединение с базой данных
-#         await conn.run_sync(Base.metadata.create_all)  # Выполняем команду создания таблиц
-
-
-# # Функция для закрытия соединения с базой данных
-# # Используется для освобождения ресурсов, когда приложение завершает работу
-# async def close_db():
-#     await engine.dispose()  # Закрываем движок и освобождаем ресурсы
