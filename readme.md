@@ -1,11 +1,5 @@
 
 # База энов
-## _Величайшая база энов в истории человечества_
-
-Developed by Stylua Inc (c)
-Developers 
-- [Jenkneo](https://github.com/Jenkneo)
-- [nuafirytiasewo](https://github.com/nuafirytiasewo)
 
 💻 Languages and Tools :
 [![Технологии](https://skillicons.dev/icons?i=fastapi,py,postgres)](https://skillicons.dev)
