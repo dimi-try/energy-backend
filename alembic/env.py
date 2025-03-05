@@ -16,9 +16,10 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Импортируем базу и модели
-from app.database import Base  # Путь к файлу с моделями
+from app.database import Base  # Импортируем Base из своего проекта
+from app.models import *  # Импортируем ВСЕ модели, чтобы Alembic их увидел
 
-target_metadata = Base.metadata
+target_metadata = Base.metadata # Alembic будет использовать метаданные моделей
 
 
 def run_migrations_offline() -> None:
