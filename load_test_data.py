@@ -10,6 +10,7 @@ CSV_FILE = "test_data.csv"  # Обновленный путь к файлу
 def seed_data(db: Session):
     # Очищаем старые данные из таблиц
     db.query(models.Rating).delete()
+    db.query(models.Review).delete()
     db.query(models.Energy).delete()
     db.query(models.Brand).delete()
     db.query(models.User).delete()
@@ -61,27 +62,43 @@ def seed_data(db: Session):
             db.add(energy)
             db.commit()
 
-            # 3. Добавляем рейтинг и отзыв
-            # Для простоты используем user1 и user2 для добавления рейтингов
-            rating1 = models.Rating(
+            # 3. Создаем отзыв (Review)
+            review = models.Review(
                 user_id=user1.id,
                 energy_id=energy.id,
-                criteria_id=criteria1.id,  # Используем ID критерия для "Вкус"
-                rating=row["rating"],
-                review=row["description"].strip(),  # Используем описание как текст отзыва
-                created_at=datetime.strptime(row["date"], "%Y-%m-%d")  # Преобразуем строку в дату
+                review_text=row["description"].strip(),
+                created_at=datetime.strptime(row["date"], "%Y-%m-%d")
+            )
+            db.add(review)
+            db.commit()
+
+            # 4. Добавляем оценки для отзыва (Rating)
+            # В данном случае используем один и тот же рейтинг для разных критериев,
+            # но это можно модифицировать для разных оценок.
+            rating1 = models.Rating(
+                review_id=review.id,
+                criteria_id=criteria1.id,  # "Вкус"
+                rating_value=row["rating"],
+                created_at=datetime.strptime(row["date"], "%Y-%m-%d")
             )
             db.add(rating1)
 
             rating2 = models.Rating(
-                user_id=user2.id,
-                energy_id=energy.id,
-                criteria_id=criteria2.id,  # Используем ID критерия для "Цена"
-                rating=row["rating"],  # Можем использовать тот же рейтинг или изменить
-                review=row["description"].strip(),  # Тот же отзыв
-                created_at=datetime.strptime(row["date"], "%Y-%m-%d")  # Используем ту же дату
+                review_id=review.id,
+                criteria_id=criteria2.id,  # "Цена"
+                rating_value=row["rating"],  # Используем тот же рейтинг для упрощения
+                created_at=datetime.strptime(row["date"], "%Y-%m-%d")
             )
             db.add(rating2)
+
+            rating3 = models.Rating(
+                review_id=review.id,
+                criteria_id=criteria3.id,  # "Энергетический эффект"
+                rating_value=row["rating"],  # Используем тот же рейтинг
+                created_at=datetime.strptime(row["date"], "%Y-%m-%d")
+            )
+            db.add(rating3)
+
             db.commit()
 
     print("Данные успешно добавлены!")
