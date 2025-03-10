@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, Numeric, TIMESTAMP, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
-
 from .database import Base
 
 
@@ -42,7 +41,7 @@ class Energy(Base):
     # Определение связей
     brand = relationship("Brand", back_populates="energies")  # Связь с брендом
     category = relationship("Category", back_populates="energies")  # Связь с категорией
-    ratings = relationship("Rating", back_populates="energy")  # Связь с отзывами/оценками
+    reviews = relationship("Review", back_populates="energy")  # Связь с отзывами
 
 
 # Таблица пользователей
@@ -57,7 +56,7 @@ class User(Base):
     created_at = Column(TIMESTAMP, default=datetime.utcnow)  # Дата регистрации
 
     # Связи
-    ratings = relationship("Rating", back_populates="user")  # Связь с оценками
+    reviews = relationship("Review", back_populates="user")  # Связь с отзывами
     roles = relationship("UserRole", back_populates="user")  # Связь с ролями пользователя
 
 
@@ -94,19 +93,32 @@ class Criteria(Base):
     ratings = relationship("Rating", back_populates="criteria")
 
 
-# Таблица оценок и отзывов
+# Таблица отзывов (связь с энергетиками и пользователями)
+class Review(Base):
+    __tablename__ = "reviews"
+
+    id = Column(Integer, primary_key=True, index=True)  # Уникальный ID отзыва
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # ID пользователя
+    energy_id = Column(Integer, ForeignKey("energetics.id"), nullable=False)  # ID энергетика
+    review_text = Column(Text, nullable=False)  # Текст отзыва
+    created_at = Column(TIMESTAMP, default=datetime.utcnow)  # Дата оставления отзыва
+
+    # Связи
+    user = relationship("User", back_populates="reviews")  # Связь с пользователем
+    energy = relationship("Energy", back_populates="reviews")  # Связь с энергетиком
+    ratings = relationship("Rating", back_populates="review")  # Связь с оценками
+
+
+# Таблица оценок для отзывов (связь с критериями)
 class Rating(Base):
     __tablename__ = "ratings"
 
     id = Column(Integer, primary_key=True, index=True)  # Уникальный ID оценки
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # ID пользователя, который поставил оценку
-    energy_id = Column(Integer, ForeignKey("energetics.id"), nullable=False)  # ID энергетика, которому поставили оценку
-    criteria_id = Column(Integer, ForeignKey("criteria.id"), nullable=False)  # ID критерия оценки (например, "Вкус")
-    rating = Column(Numeric(3, 1), nullable=False)  # Оценка от 0.0 до 10.0
-    review = Column(Text, nullable=True)  # Отзыв (текстовое поле)
-    created_at = Column(TIMESTAMP, default=datetime.utcnow)  # Дата оставления отзыва
+    review_id = Column(Integer, ForeignKey("reviews.id"), nullable=False)  # ID отзыва
+    criteria_id = Column(Integer, ForeignKey("criteria.id"), nullable=False)  # ID критерия оценки
+    rating_value = Column(Numeric(3, 1), nullable=False)  # Оценка по данному критерию
+    created_at = Column(TIMESTAMP, default=datetime.utcnow)  # Дата оставления оценки
 
-    # Определение связей
-    user = relationship("User", back_populates="ratings")  # Связь с пользователем
-    energy = relationship("Energy", back_populates="ratings")  # Связь с энергетиком
-    criteria = relationship("Criteria", back_populates="ratings")  # Связь с критерием оценки
+    # Связи
+    review = relationship("Review", back_populates="ratings")  # Связь с отзывом
+    criteria = relationship("Criteria", back_populates="ratings")  # Связь с критерием

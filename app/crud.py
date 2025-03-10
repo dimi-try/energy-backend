@@ -1,131 +1,195 @@
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import func
+from sqlalchemy import func, desc
 from . import models, schemas
+from typing import Dict, Any
 
-# ===================== CRUD ОПЕРАЦИИ С ТАБЛИЦЕЙ BRAND =====================
-
+# ========================= BRANDS =========================
 def get_brand(db: Session, brand_id: int):
-    """ Получить бренд по его ID """
     return db.query(models.Brand).filter(models.Brand.id == brand_id).first()
 
-
 def get_brands(db: Session, skip: int = 0, limit: int = 100):
-    """ Получить список всех брендов с пагинацией """
     return db.query(models.Brand).offset(skip).limit(limit).all()
 
-
-# ===================== CRUD ОПЕРАЦИИ С ТАБЛИЦЕЙ ENERGY =====================
-
+# ========================= ENERGIES =========================
 def get_energy(db: Session, energy_id: int):
-    """ Получить энергетик по его ID """
     return db.query(models.Energy).filter(models.Energy.id == energy_id).first()
 
-
 def get_energies(db: Session, skip: int = 0, limit: int = 100):
-    """ Получить список всех энергетиков с пагинацией """
     return db.query(models.Energy).offset(skip).limit(limit).all()
 
-
 def get_energies_by_brand(db: Session, brand_id: int, skip: int = 0, limit: int = 100):
-    """ Получить список энергетиков определенного бренда """
     return db.query(models.Energy).filter(models.Energy.brand_id == brand_id).offset(skip).limit(limit).all()
 
-
-# ===================== CRUD ОПЕРАЦИИ С ТАБЛИЦЕЙ USER =====================
-
+# ========================= USERS =========================
 def get_user(db: Session, user_id: int):
-    """ Получить пользователя по его ID """
     return db.query(models.User).filter(models.User.id == user_id).first()
 
+def get_user_by_email(db: Session, email: str):
+    return db.query(models.User).filter(models.User.email == email).first()
 
-# ===================== CRUD ОПЕРАЦИИ С ТАБЛИЦЕЙ RATING =====================
-
-def create_rating(db: Session, rating: schemas.RatingCreate):
-    """ Добавить отзыв и оценку на энергетик """
-    db_rating = models.Rating(
-        user_id=rating.user_id,
-        energy_id=rating.energy_id,
-        taste_score=rating.taste_score,
-        price_score=rating.price_score,
-        comment=rating.comment
+def create_user(db: Session, user: schemas.UserCreate):
+    db_user = models.User(
+        username=user.username,
+        email=user.email,
+        password=user.password  # В реальном приложении необходимо хеширование!
     )
-    db.add(db_rating)
+    db.add(db_user)
     db.commit()
-    db.refresh(db_rating)
-    return db_rating
+    db.refresh(db_user)
+    return db_user
 
+# ========================= REVIEWS & RATINGS =========================
+def create_review_with_ratings(db: Session, review: schemas.ReviewCreate):
+    # Создаем отзыв
+    db_review = models.Review(
+        user_id=review.user_id,
+        energy_id=review.energy_id,
+        review_text=review.review_text
+    )
+    db.add(db_review)
+    db.commit()
+    db.refresh(db_review)
+    
+    # Создаем оценки по критериям
+    for rating in review.ratings:
+        db_rating = models.Rating(
+            review_id=db_review.id,
+            criteria_id=rating.criteria_id,
+            rating_value=rating.rating_value
+        )
+        db.add(db_rating)
+    
+    db.commit()
+    return db_review
 
-def get_ratings_by_energy(db: Session, energy_id: int):
-    """ Получить все отзывы на конкретный энергетик """
-    return db.query(models.Rating).filter(models.Rating.energy_id == energy_id).all()
+def get_review(db: Session, review_id: int):
+    return db.query(models.Review).filter(models.Review.id == review_id).first()
 
+def get_reviews_by_energy(db: Session, energy_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.Review).filter(models.Review.energy_id == energy_id).offset(skip).limit(limit).all()
 
-# ===================== ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ =====================
+def get_rating(db: Session, rating_id: int):
+    return db.query(models.Rating).filter(models.Rating.id == rating_id).first()
 
-def get_user_profile(db: Session, user_id: int):
-    """ Получить статистику пользователя """
-    user = db.query(models.User).filter(models.User.id == user_id).first()
+def get_ratings_by_review(db: Session, review_id: int):
+    return db.query(models.Rating).filter(models.Rating.review_id == review_id).all()
+
+# ========================= CRITERIA =========================
+def create_criteria(db: Session, criteria: schemas.CriteriaCreate):
+    db_criteria = models.Criteria(name=criteria.name)
+    db.add(db_criteria)
+    db.commit()
+    db.refresh(db_criteria)
+    return db_criteria
+
+def get_criteria_by_name(db: Session, name: str):
+    return db.query(models.Criteria).filter(models.Criteria.name == name).first()
+
+def get_all_criteria(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Criteria).offset(skip).limit(limit).all()
+
+# ========================= CATEGORIES =========================
+def create_category(db: Session, category: schemas.CategoryCreate):
+    db_category = models.Category(name=category.name)
+    db.add(db_category)
+    db.commit()
+    db.refresh(db_category)
+    return db_category
+
+def get_category_by_name(db: Session, name: str):
+    return db.query(models.Category).filter(models.Category.name == name).first()
+
+def get_categories(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Category).offset(skip).limit(limit).all()
+
+# ========================= USER PROFILE =========================
+def get_user_profile(db: Session, user_id: int) -> Dict[str, Any]:
+    user = db.query(models.User).get(user_id)
     if not user:
         return None
 
-    # Получаем оценки пользователя
-    ratings = db.query(models.Rating).filter(models.Rating.user_id == user_id).all()
-    if not ratings:
+    # Статистика по оценкам
+    reviews = db.query(models.Review).filter(models.Review.user_id == user_id).all()
+    total_rated = len(reviews)
+    
+    if total_rated == 0:
         return {
-            "user_id": user.id,
-            "rated_count": 0,
-            "average_score": None,
+            "user": user,
+            "total_ratings": 0,
+            "average_rating": None,
             "favorite_brand": None,
             "favorite_energy": None
         }
 
-    # Считаем средний балл
-    avg_score = sum((r.taste_score + r.price_score) / 2 for r in ratings) / len(ratings)
+    # Расчет среднего рейтинга
+    total_rating = 0
+    brand_stats = {}
+    energy_stats = {}
 
-    # Определяем любимый бренд
-    brand_scores = {}
-    for r in ratings:
-        energy = db.query(models.Energy).filter(models.Energy.id == r.energy_id).first()
-        if energy:
-            brand_scores[energy.brand_id] = brand_scores.get(energy.brand_id, 0) + ((r.taste_score + r.price_score) / 2)
+    for review in reviews:
+        ratings = db.query(models.Rating).filter(models.Rating.review_id == review.id).all()
+        for rating in ratings:
+            total_rating += rating.rating_value
+            
+            # Статистика по брендам
+            energy = db.query(models.Energy).get(review.energy_id)
+            brand_id = energy.brand_id
+            brand_stats[brand_id] = brand_stats.get(brand_id, 0) + rating.rating_value
+            
+            # Статистика по энергетикам
+            energy_stats[review.energy_id] = energy_stats.get(review.energy_id, 0) + rating.rating_value
 
-    favorite_brand = max(brand_scores, key=brand_scores.get) if brand_scores else None
+    average_rating = total_rating / (total_rated * len(db.query(models.Criteria).all()))
 
-    # Определяем любимый энергетик
-    energy_scores = {r.energy_id: (r.taste_score + r.price_score) / 2 for r in ratings}
-    favorite_energy = max(energy_scores, key=energy_scores.get) if energy_scores else None
+    # Любимый бренд
+    favorite_brand_id = max(brand_stats, key=brand_stats.get) if brand_stats else None
+    favorite_brand = db.query(models.Brand).get(favorite_brand_id) if favorite_brand_id else None
+
+    # Любимый энергетик
+    favorite_energy_id = max(energy_stats, key=energy_stats.get) if energy_stats else None
+    favorite_energy = db.query(models.Energy).get(favorite_energy_id) if favorite_energy_id else None
 
     return {
-        "user_id": user.id,
-        "rated_count": len(ratings),
-        "average_score": avg_score,
+        "user": user,
+        "total_ratings": total_rated,
+        "average_rating": round(average_rating, 1),
         "favorite_brand": favorite_brand,
         "favorite_energy": favorite_energy
     }
 
+# ========================= TOP RATINGS =========================
+def get_top_energies(db: Session, limit: int = 10):
+    subquery = (
+        db.query(
+            models.Review.energy_id,
+            func.avg(models.Rating.rating_value).label('avg_rating')
+        )
+        .join(models.Rating)
+        .group_by(models.Review.energy_id)
+        .subquery()
+    )
 
-# ===================== ТОПЫ =====================
+    return (
+        db.query(
+            models.Energy,
+            func.coalesce(subquery.c.avg_rating, 0).label('average_rating')
+        )
+        .outerjoin(subquery, models.Energy.id == subquery.c.energy_id)
+        .order_by(desc('average_rating'))
+        .limit(limit)
+        .all()
+    )
 
-def get_top_energies(db: Session):
-    """ Получить топ энергетиков по среднему рейтингу """
-    return db.query(
-        models.Energy.id,
-        models.Energy.name,
-        func.avg((models.Rating.taste_score + models.Rating.price_score) / 2).label("average_rating")
-    ).join(models.Rating, models.Energy.id == models.Rating.energy_id) \
-        .group_by(models.Energy.id) \
-        .order_by(func.avg((models.Rating.taste_score + models.Rating.price_score) / 2).desc()) \
-        .limit(10).all()
-
-
-def get_top_brands(db: Session):
-    """ Получить топ брендов энергетиков по среднему рейтингу """
+def get_top_brands(db: Session, limit: int = 10):
     return db.query(
         models.Brand.id,
         models.Brand.name,
-        func.avg((models.Rating.taste_score + models.Rating.price_score) / 2).label("average_rating")
-    ).join(models.Energy, models.Brand.id == models.Energy.brand_id) \
-        .join(models.Rating, models.Energy.id == models.Rating.energy_id) \
-        .group_by(models.Brand.id) \
-        .order_by(func.avg((models.Rating.taste_score + models.Rating.price_score) / 2).desc()) \
-        .limit(10).all()
+        func.avg(models.Rating.rating_value).label('average_rating')
+    ).select_from(models.Brand)\
+     .join(models.Energy, models.Brand.id == models.Energy.brand_id)\
+     .join(models.Review, models.Energy.id == models.Review.energy_id)\
+     .join(models.Rating, models.Review.id == models.Rating.review_id)\
+     .group_by(models.Brand.id)\
+     .order_by(desc('average_rating'))\
+     .limit(limit)\
+     .all()
