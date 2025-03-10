@@ -56,8 +56,20 @@ C:\ваш\путь\ngrok\\ngrok http --url=super-unicorn-secondly.ngrok-free.app
 venv\Scripts\activate
 ```
 
-#### Применить миграции Alembic
+#### Далее ЛИБО применить миграции Alembic
 
+Если у вас уже есть миграции, то удаляем старые миграции (для Linux)
+```
+rm -rf alembic/versions/* 
+```
+Генерируем новые миграции
+```
+alembic revision --autogenerate -m "Initial migration"
+```
+Прежде чем запустить проект, необходимо выполнить миграции, а так же применить эти миграции на базе данных
+```sh
+alembic revision --autogenerate -m "Initial migration"
+```
 Для применения миграций выполните команду:
 
 ```bash
@@ -70,6 +82,13 @@ alembic upgrade head
 > же сносить базу данных полностью, а после
 > создавать новую.
 
+#### ЛИБО загрузить стоковые тестовые данные и автоматически подготовить всю БД и миграции
+
+Для загрузки данных из CSV и автоматических миграций выполните:
+
+```bash
+python load_test_data.py
+```
 
 #### Запустить бэкэнд
 
@@ -77,14 +96,6 @@ alembic upgrade head
 
 ```bash
 uvicorn app.main:app --reload
-```
-
-#### Загрузить тестовые данные
-
-Для загрузки данных из CSV выполните:
-
-```bash
-python load_test_data.py
 ```
 
 ---
