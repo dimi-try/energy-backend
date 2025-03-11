@@ -141,12 +141,12 @@ def seed_data():
                     models.Rating(
                         review_id=review.id,
                         criteria_id=criteria[1].id,
-                        rating_value=float(row["rating"]) - 0.5
+                        rating_value=random.randint(0, 10)
                     ),
                     models.Rating(
                         review_id=review.id,
                         criteria_id=criteria[2].id,
-                        rating_value=float(row["rating"]) + 0.5
+                        rating_value=random.randint(0, 10)
                     )
                 ]
                 db.add_all(ratings)
