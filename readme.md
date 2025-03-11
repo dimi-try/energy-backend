@@ -56,6 +56,9 @@ venv\Scripts\activate  # Windows
 source venv/bin/activate  # Linux/macOS
 ```
 
+#### Подготовка .env
+Переименуйте .env.sample в .env и вставьте в него свои значения
+
 ### 2️⃣ Настройка и запуск Backend
 
 #### Автоматическая подготовка базы данных и миграций
