@@ -5,8 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 origins = [
-    "https://handy-redbird-visually.ngrok-free.app",
-    "http://localhost",  # Добавьте другие, если необходимо
+    "http://localhost",
     "http://127.0.0.1",
 ]
 
