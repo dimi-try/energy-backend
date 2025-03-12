@@ -1,18 +1,32 @@
 import os
 import csv
-import random
+import random #для рандома описания и разных выборов
+import string  #для генерации описания
 from datetime import datetime
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from alembic.config import Config
 from alembic import command
 from app import models  # Импорт моделей SQLAlchemy
+from decimal import Decimal, ROUND_HALF_UP #для округления
 
 # Конфигурация
 DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 alembic_cfg = Config("alembic.ini")
+
+def random_description(length=10):  
+    """Рандомное описание энергетика"""
+    words = ["".join(random.choices(string.ascii_lowercase, k=random.randint(3, 10))) for _ in range(length)]  
+    return " ".join(words).capitalize() + "."  
+
+def generate_rating_value() -> float:
+    # Генерируем случайное число от 0 до 10 с плавающей точкой
+    random_value = random.uniform(0, 10)
+    # Округляем до 4 знаков после запятой
+    rounded_value = Decimal(random_value).quantize(Decimal('0.0000'), rounding=ROUND_HALF_UP)
+    return float(rounded_value)
 
 def reset_database():
     """Полная очистка базы данных"""
@@ -114,7 +128,7 @@ def seed_data():
                     name=row["name"].strip(),
                     brand_id=brands[brand_name],
                     category_id=random.choice(categories).id,  # Случайная категория
-                    description=row["description"].strip(),
+                    description=random_description(), # Создает рандомное описание из набора букв
                     image_url=row.get("image_url", ""),
                     ingredients=row.get("ingredients", "")
                 )
@@ -123,9 +137,9 @@ def seed_data():
 
                 # Создаем отзыв
                 review = models.Review(
-                    user_id=users[0].id,
+                    user_id=random.choice(users).id, #рандомно выбираем юзера который это написал вместо users[0].id
                     energy_id=energy.id,
-                    review_text=row["description"].strip(),
+                    review_text=row["description"],
                     created_at=datetime.strptime(row["date"], "%Y-%m-%d")
                 )
                 db.add(review)
@@ -141,12 +155,12 @@ def seed_data():
                     models.Rating(
                         review_id=review.id,
                         criteria_id=criteria[1].id,
-                        rating_value=random.randint(0, 10)
+                        rating_value=generate_rating_value()  # Генерация с округлением
                     ),
                     models.Rating(
                         review_id=review.id,
                         criteria_id=criteria[2].id,
-                        rating_value=random.randint(0, 10)
+                        rating_value=generate_rating_value()  # Генерация с округлением
                     )
                 ]
                 db.add_all(ratings)

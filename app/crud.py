@@ -162,7 +162,7 @@ def get_top_energies(db: Session, limit: int = 10):
     subquery = (
         db.query(
             models.Review.energy_id,
-            func.avg(models.Rating.rating_value).label('avg_rating')
+        func.round(func.avg(models.Rating.rating_value), 4).label('avg_rating')  # Округление до 4 знаков
         )
         .join(models.Rating)
         .group_by(models.Review.energy_id)
