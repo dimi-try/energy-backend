@@ -122,5 +122,6 @@ class EnergyTop(BaseModel):
         from_attributes = True
 
 class BrandTop(BaseModel):
-    brand: Brand
+    id: int
+    name: str
     average_rating: condecimal(ge=0, le=10, decimal_places=4)
