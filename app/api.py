@@ -11,7 +11,7 @@ router = APIRouter()
 def read_brands(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return crud.get_brands(db, skip=skip, limit=limit)
 
-@router.get("/brands/{brand_id}", response_model=schemas.Brand)
+@router.get("/brand/{brand_id}", response_model=schemas.Brand)
 def read_brand(brand_id: int, db: Session = Depends(get_db)):
     db_brand = crud.get_brand(db, brand_id=brand_id)
     if not db_brand:
@@ -23,7 +23,7 @@ def read_brand(brand_id: int, db: Session = Depends(get_db)):
 def read_energies(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return crud.get_energies(db, skip=skip, limit=limit)
 
-@router.get("/energies/{energy_id}", response_model=schemas.Energy)
+@router.get("/energy/{energy_id}", response_model=schemas.Energy)
 def read_energy(energy_id: int, db: Session = Depends(get_db)):
     db_energy = crud.get_energy(db, energy_id=energy_id)
     if not db_energy:
