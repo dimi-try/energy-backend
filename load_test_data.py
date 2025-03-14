@@ -129,38 +129,63 @@ def seed_data():
                     brand_id=brands[brand_name],
                     category_id=random.choice(categories).id,  # Случайная категория
                     description=random_description(), # Создает рандомное описание из набора букв
-                    image_url=row.get("image_url", ""),
-                    ingredients=row.get("ingredients", "")
+                    image_url=random_description(), # Создает рандомное описание из набора букв
+                    ingredients=random_description(), # Создает рандомное описание из набора букв
                 )
                 db.add(energy)
                 db.commit()
 
                 # Создаем отзыв
-                review = models.Review(
-                    user_id=random.choice(users).id, #рандомно выбираем юзера который это написал вместо users[0].id
-                    energy_id=energy.id,
-                    review_text=row["description"],
-                    created_at=datetime.strptime(row["date"], "%Y-%m-%d")
-                )
-                db.add(review)
+                reviews = [
+                    models.Review(
+                        user_id=users[0].id, #первый юзер
+                        energy_id=energy.id,
+                        review_text=row["description"],
+                        created_at=datetime.strptime(row["date"], "%Y-%m-%d")
+                    ),
+                     models.Review(
+                        user_id=users[1].id, #второй юзер
+                        energy_id=energy.id,
+                        review_text=random_description(), # Создает рандомное описание из набора букв
+                        created_at=datetime.now()
+                    ),
+                ]
+                
+                db.add_all(reviews)
                 db.commit()
 
                 # Создаем оценки
                 ratings = [
                     models.Rating(
-                        review_id=review.id,
+                        review_id=reviews[0].id,
                         criteria_id=criteria[0].id,
-                        rating_value=float(row["rating"])
+                        rating_value=float(row["rating"]) # оценка по вкусу первого юзера
                     ),
                     models.Rating(
-                        review_id=review.id,
+                        review_id=reviews[0].id,
                         criteria_id=criteria[1].id,
-                        rating_value=generate_rating_value()  # Генерация с округлением
+                        rating_value=float(row["rating"]) # оценка по цене первого юзера
                     ),
                     models.Rating(
-                        review_id=review.id,
+                        review_id=reviews[0].id,
                         criteria_id=criteria[2].id,
-                        rating_value=generate_rating_value()  # Генерация с округлением
+                        rating_value=float(row["rating"]) # оценка по химозе первого юзера
+                    ),
+
+                    models.Rating(
+                        review_id=reviews[1].id,
+                        criteria_id=criteria[0].id,
+                        rating_value=generate_rating_value()  # Генерация с округлением (оценка по вкусу второго юзера)
+                    ),
+                    models.Rating(
+                        review_id=reviews[1].id,
+                        criteria_id=criteria[1].id,
+                        rating_value=generate_rating_value()  # Генерация с округлением (оценка по цене второго юзера)
+                    ),
+                    models.Rating(
+                        review_id=reviews[1].id,
+                        criteria_id=criteria[2].id,
+                        rating_value=generate_rating_value()  # Генерация с округлением (оценка по химозе второго юзера)
                     )
                 ]
                 db.add_all(ratings)
