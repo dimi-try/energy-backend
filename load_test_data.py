@@ -1,18 +1,32 @@
 import os
 import csv
-import random
+import random #для рандома описания и разных выборов
+import string  #для генерации описания
 from datetime import datetime
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from alembic.config import Config
 from alembic import command
 from app import models  # Импорт моделей SQLAlchemy
+from decimal import Decimal, ROUND_HALF_UP #для округления
 
 # Конфигурация
 DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 alembic_cfg = Config("alembic.ini")
+
+def random_description(length=10):  
+    """Рандомное описание энергетика"""
+    words = ["".join(random.choices(string.ascii_lowercase, k=random.randint(3, 10))) for _ in range(length)]  
+    return " ".join(words).capitalize() + "."  
+
+def generate_rating_value() -> float:
+    # Генерируем случайное число от 0 до 10 с плавающей точкой
+    random_value = random.uniform(0, 10)
+    # Округляем до 4 знаков после запятой
+    rounded_value = Decimal(random_value).quantize(Decimal('0.0000'), rounding=ROUND_HALF_UP)
+    return float(rounded_value)
 
 def reset_database():
     """Полная очистка базы данных"""
@@ -114,39 +128,64 @@ def seed_data():
                     name=row["name"].strip(),
                     brand_id=brands[brand_name],
                     category_id=random.choice(categories).id,  # Случайная категория
-                    description=row["description"].strip(),
-                    image_url=row.get("image_url", ""),
-                    ingredients=row.get("ingredients", "")
+                    description=random_description(), # Создает рандомное описание из набора букв
+                    image_url=random_description(), # Создает рандомное описание из набора букв
+                    ingredients=random_description(), # Создает рандомное описание из набора букв
                 )
                 db.add(energy)
                 db.commit()
 
                 # Создаем отзыв
-                review = models.Review(
-                    user_id=users[0].id,
-                    energy_id=energy.id,
-                    review_text=row["description"].strip(),
-                    created_at=datetime.strptime(row["date"], "%Y-%m-%d")
-                )
-                db.add(review)
+                reviews = [
+                    models.Review(
+                        user_id=users[0].id, #первый юзер
+                        energy_id=energy.id,
+                        review_text=row["description"],
+                        created_at=datetime.strptime(row["date"], "%Y-%m-%d")
+                    ),
+                     models.Review(
+                        user_id=users[1].id, #второй юзер
+                        energy_id=energy.id,
+                        review_text=random_description(), # Создает рандомное описание из набора букв
+                        created_at=datetime.now()
+                    ),
+                ]
+                
+                db.add_all(reviews)
                 db.commit()
 
                 # Создаем оценки
                 ratings = [
                     models.Rating(
-                        review_id=review.id,
+                        review_id=reviews[0].id,
                         criteria_id=criteria[0].id,
-                        rating_value=float(row["rating"])
+                        rating_value=float(row["rating"]) # оценка по вкусу первого юзера
                     ),
                     models.Rating(
-                        review_id=review.id,
+                        review_id=reviews[0].id,
                         criteria_id=criteria[1].id,
-                        rating_value=random.randint(0, 10)
+                        rating_value=float(row["rating"]) # оценка по цене первого юзера
                     ),
                     models.Rating(
-                        review_id=review.id,
+                        review_id=reviews[0].id,
                         criteria_id=criteria[2].id,
-                        rating_value=random.randint(0, 10)
+                        rating_value=float(row["rating"]) # оценка по химозе первого юзера
+                    ),
+
+                    models.Rating(
+                        review_id=reviews[1].id,
+                        criteria_id=criteria[0].id,
+                        rating_value=generate_rating_value()  # Генерация с округлением (оценка по вкусу второго юзера)
+                    ),
+                    models.Rating(
+                        review_id=reviews[1].id,
+                        criteria_id=criteria[1].id,
+                        rating_value=generate_rating_value()  # Генерация с округлением (оценка по цене второго юзера)
+                    ),
+                    models.Rating(
+                        review_id=reviews[1].id,
+                        criteria_id=criteria[2].id,
+                        rating_value=generate_rating_value()  # Генерация с округлением (оценка по химозе второго юзера)
                     )
                 ]
                 db.add_all(ratings)

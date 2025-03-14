@@ -76,7 +76,7 @@ class Criteria(CriteriaBase):
 # =============== ОТЗЫВЫ И ОЦЕНКИ ===============
 class RatingBase(BaseModel):
     criteria_id: int
-    rating_value: condecimal(ge=0, le=10, decimal_places=1)
+    rating_value: condecimal(ge=0, le=10, decimal_places=4)
 
 class ReviewBase(BaseModel):
     energy_id: int
@@ -104,7 +104,7 @@ class Rating(RatingBase):
 class UserProfile(BaseModel):
     user: User
     total_ratings: int
-    average_rating: Optional[condecimal(ge=0, le=10, decimal_places=1)] = None
+    average_rating: Optional[condecimal(ge=0, le=10, decimal_places=4)] = None
     favorite_brand: Optional[Brand] = None
     favorite_energy: Optional[Energy] = None
     class Config:
@@ -114,7 +114,7 @@ class UserProfile(BaseModel):
 class EnergyTop(BaseModel):
     id: int
     name: str
-    average_rating: condecimal(ge=0, le=10, decimal_places=1)
+    average_rating: condecimal(ge=0, le=10, decimal_places=4)
     brand: Brand
     category: Optional[Category] = None
 
@@ -122,5 +122,6 @@ class EnergyTop(BaseModel):
         from_attributes = True
 
 class BrandTop(BaseModel):
-    brand: Brand
-    average_rating: condecimal(ge=0, le=10, decimal_places=1)
+    id: int
+    name: str
+    average_rating: condecimal(ge=0, le=10, decimal_places=4)

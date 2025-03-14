@@ -158,11 +158,11 @@ def get_user_profile(db: Session, user_id: int) -> Dict[str, Any]:
     }
 
 # ========================= TOP RATINGS =========================
-def get_top_energies(db: Session, limit: int = 10):
+def get_top_energies(db: Session, limit: int = 100):
     subquery = (
         db.query(
             models.Review.energy_id,
-            func.avg(models.Rating.rating_value).label('avg_rating')
+        func.round(func.avg(models.Rating.rating_value), 4).label('avg_rating')  # Округление до 4 знаков
         )
         .join(models.Rating)
         .group_by(models.Review.energy_id)
@@ -180,11 +180,11 @@ def get_top_energies(db: Session, limit: int = 10):
         .all()
     )
 
-def get_top_brands(db: Session, limit: int = 10):
+def get_top_brands(db: Session, limit: int = 100):
     return db.query(
         models.Brand.id,
         models.Brand.name,
-        func.avg(models.Rating.rating_value).label('average_rating')
+        func.round(func.avg(models.Rating.rating_value), 4).label('average_rating')
     ).select_from(models.Brand)\
      .join(models.Energy, models.Brand.id == models.Energy.brand_id)\
      .join(models.Review, models.Energy.id == models.Review.energy_id)\
