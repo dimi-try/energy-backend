@@ -159,26 +159,50 @@ def get_user_profile(db: Session, user_id: int) -> Dict[str, Any]:
 
 # ========================= TOP RATINGS =========================
 def get_top_energies(db: Session, limit: int = 100):
-    subquery = (
+    # Подзапрос для вычисления среднего рейтинга для каждого energy_id
+    avg_rating_subquery = (
         db.query(
-            models.Review.energy_id,
-        func.round(func.avg(models.Rating.rating_value), 4).label('avg_rating')  # Округление до 4 знаков
+            models.Review.energy_id,  # Выбираем energy_id из таблицы Review
+            func.round(func.avg(models.Rating.rating_value), 4).label('avg_rating')  # Средний рейтинг с округлением до 4 знаков
         )
-        .join(models.Rating)
-        .group_by(models.Review.energy_id)
-        .subquery()
+        .join(models.Rating)  # Присоединяем таблицу Rating к Review для получения рейтингов
+        .group_by(models.Review.energy_id)  # Группируем результаты по energy_id
+        .subquery()  # Преобразуем запрос в подзапрос для использования в основном запросе
     )
 
-    return (
+    # Подзапрос для вычисления количества отзывов для каждого energy_id
+    review_count_subquery = (
         db.query(
-            models.Energy,
-            func.coalesce(subquery.c.avg_rating, 0).label('average_rating')
+            models.Review.energy_id,  # Выбираем energy_id из таблицы Review
+            func.count(models.Review.id).label('review_count')  # Количество отзывов для каждого energy_id
         )
-        .outerjoin(subquery, models.Energy.id == subquery.c.energy_id)
-        .order_by(desc('average_rating'))
-        .limit(limit)
-        .all()
+        .group_by(models.Review.energy_id)  # Группируем результаты по energy_id
+        .subquery()  # Преобразуем запрос в подзапрос для использования в основном запросе
     )
+
+    # Основной запрос для получения топ energy с их средним рейтингом и количеством отзывов
+    energies = (
+        db.query(
+            models.Energy,  # Выбираем все поля из таблицы Energy
+            func.coalesce(avg_rating_subquery.c.avg_rating, 0).label('average_rating'),  # Используем средний рейтинг из подзапроса или 0, если рейтинга нет
+            func.coalesce(review_count_subquery.c.review_count, 0).label('review_count')  # Используем количество отзывов из подзапроса или 0, если отзывов нет
+        )
+        .outerjoin(avg_rating_subquery, models.Energy.id == avg_rating_subquery.c.energy_id)  # Присоединяем подзапрос со средним рейтингом
+        .outerjoin(review_count_subquery, models.Energy.id == review_count_subquery.c.energy_id)  # Присоединяем подзапрос с количеством отзывов
+        .order_by(desc('average_rating'))  # Сортируем результаты по убыванию среднего рейтинга
+        .limit(limit)  # Ограничиваем количество результатов значением limit
+        .all()  # Выполняем запрос и получаем все результаты
+    )
+
+    # Возвращаем список energy с добавленным average_rating и review_count
+    return [{
+        "id": energy.id,  # ID энергетика
+        "name": energy.name,  # Название энергетика
+        "average_rating": float(avg_rating),  # Средний рейтинг энергетика (приводим к float для condecimal)
+        "brand": energy.brand,  # Бренд энергетика (должен быть объектом модели Brand)
+        "category": energy.category,  # Категория энергетика (должен быть объектом модели Category или None)
+        "review_count": review_count  # Количество отзывов для данного энергетика
+    } for energy, avg_rating, review_count in energies]  # Проходим по каждому результату и формируем словарь
 
 def get_top_brands(db: Session, limit: int = 100):
     return db.query(
