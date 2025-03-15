@@ -112,14 +112,15 @@ class UserProfile(BaseModel):
 
 # =============== ТОПЫ ===============
 class EnergyTop(BaseModel):
-    id: int
-    name: str
-    average_rating: condecimal(ge=0, le=10, decimal_places=4)
-    brand: Brand
-    category: Optional[Category] = None
+    id: int  # ID энергетика
+    name: str  # Название энергетика
+    average_rating: condecimal(ge=0, le=10, decimal_places=4)  # Средний рейтинг энергетика от 0 до 10 с 4 знаками после запятой
+    brand: Brand  # Бренд энергетика
+    category: Optional[Category] = None  # Категория энергетика (может быть None)
+    review_count: int  # Общее количество записей в таблице Review
 
     class Config:
-        from_attributes = True
+        from_attributes = True  # Разрешаем использование ORM-моделей
 
 class BrandTop(BaseModel):
     id: int

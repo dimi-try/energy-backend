@@ -108,16 +108,10 @@ def get_user_profile(user_id: int, db: Session = Depends(get_db)):
     return profile
 
 # ========================= TOP RATINGS =========================
-@router.get("/top/energies/", response_model=List[schemas.EnergyTop])
-def get_top_energies(db: Session = Depends(get_db)):
-    results = crud.get_top_energies(db)
-    return [{
-        "id": energy.id,
-        "name": energy.name,
-        "average_rating": avg_rating,
-        "brand": energy.brand,
-        "category": energy.category
-    } for energy, avg_rating in results]
+@router.get("/top/energies/", response_model=List[schemas.EnergyTop])  # Определяем GET-запрос с указанием схемы ответа
+def get_top_energies(db: Session = Depends(get_db)):  # Зависимость для получения сессии базы данных
+    results = crud.get_top_energies(db)  # Вызываем функцию get_top_energies для получения данных
+    return results  # Возвращаем результаты в формате JSON
 
 @router.get("/top/brands/", response_model=List[schemas.BrandTop])
 def get_top_brands(db: Session = Depends(get_db)):
