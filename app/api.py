@@ -6,22 +6,6 @@ from typing import List
 
 router = APIRouter()
 
-# ========================= TOP RATINGS =========================
-@router.get("/top/energies/", response_model=List[schemas.EnergyTop])
-def get_top_energies(db: Session = Depends(get_db)):
-    results = crud.get_top_energies(db)
-    return [{
-        "id": energy.id,
-        "name": energy.name,
-        "average_rating": avg_rating,
-        "brand": energy.brand,
-        "category": energy.category
-    } for energy, avg_rating in results]
-
-@router.get("/top/brands/", response_model=List[schemas.BrandTop])
-def get_top_brands(db: Session = Depends(get_db)):
-    return crud.get_top_brands(db)
-
 # ========================= BRANDS =========================
 @router.get("/brands/", response_model=List[schemas.Brand])
 def read_brands(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
@@ -35,9 +19,9 @@ def read_brand(brand_id: int, db: Session = Depends(get_db)):
     return db_brand
 
 # ========================= ENERGIES =========================
-# @router.get("/energies/", response_model=List[schemas.Energy])
-# def read_energies(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-#     return crud.get_energies(db, skip=skip, limit=limit)
+@router.get("/energies/", response_model=List[schemas.Energy])
+def read_energies(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return crud.get_energies(db, skip=skip, limit=limit)
 
 @router.get("/energy/{energy_id}", response_model=schemas.Energy)
 def read_energy(energy_id: int, db: Session = Depends(get_db)):
@@ -65,14 +49,6 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
-# ========================= USER PROFILE =========================
-@router.get("/users/{user_id}/profile", response_model=schemas.UserProfile)
-def get_user_profile(user_id: int, db: Session = Depends(get_db)):
-    profile = crud.get_user_profile(db, user_id=user_id)
-    if not profile:
-        raise HTTPException(status_code=404, detail="Profile not found")
-    return profile
-
 # ========================= REVIEWS =========================
 @router.post("/reviews/", response_model=schemas.Review, status_code=status.HTTP_201_CREATED)
 def create_review(review: schemas.ReviewCreate, db: Session = Depends(get_db)):
@@ -99,18 +75,6 @@ def read_review(review_id: int, db: Session = Depends(get_db)):
 def read_energy_reviews(energy_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return crud.get_reviews_by_energy(db, energy_id=energy_id, skip=skip, limit=limit)
 
-# ========================= RATINGS =========================
-@router.get("/ratings/{rating_id}", response_model=schemas.Rating)
-def read_rating(rating_id: int, db: Session = Depends(get_db)):
-    db_rating = crud.get_rating(db, rating_id=rating_id)
-    if not db_rating:
-        raise HTTPException(status_code=404, detail="Rating not found")
-    return db_rating
-
-@router.get("/reviews/{review_id}/ratings/", response_model=List[schemas.Rating])
-def read_review_ratings(review_id: int, db: Session = Depends(get_db)):
-    return crud.get_ratings_by_review(db, review_id=review_id)
-
 # ========================= CRITERIA =========================
 @router.post("/criteria/", response_model=schemas.Criteria, status_code=status.HTTP_201_CREATED)
 def create_criteria(criteria: schemas.CriteriaCreate, db: Session = Depends(get_db)):
@@ -134,3 +98,39 @@ def create_category(category: schemas.CategoryCreate, db: Session = Depends(get_
 @router.get("/categories/", response_model=List[schemas.Category])
 def read_categories(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return crud.get_categories(db, skip=skip, limit=limit)
+
+# ========================= USER PROFILE =========================
+@router.get("/users/{user_id}/profile", response_model=schemas.UserProfile)
+def get_user_profile(user_id: int, db: Session = Depends(get_db)):
+    profile = crud.get_user_profile(db, user_id=user_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    return profile
+
+# ========================= TOP RATINGS =========================
+@router.get("/top/energies/", response_model=List[schemas.EnergyTop])
+def get_top_energies(db: Session = Depends(get_db)):
+    results = crud.get_top_energies(db)
+    return [{
+        "id": energy.id,
+        "name": energy.name,
+        "average_rating": avg_rating,
+        "brand": energy.brand,
+        "category": energy.category
+    } for energy, avg_rating in results]
+
+@router.get("/top/brands/", response_model=List[schemas.BrandTop])
+def get_top_brands(db: Session = Depends(get_db)):
+    return crud.get_top_brands(db)
+
+# ========================= RATINGS =========================
+@router.get("/ratings/{rating_id}", response_model=schemas.Rating)
+def read_rating(rating_id: int, db: Session = Depends(get_db)):
+    db_rating = crud.get_rating(db, rating_id=rating_id)
+    if not db_rating:
+        raise HTTPException(status_code=404, detail="Rating not found")
+    return db_rating
+
+@router.get("/reviews/{review_id}/ratings/", response_model=List[schemas.Rating])
+def read_review_ratings(review_id: int, db: Session = Depends(get_db)):
+    return crud.get_ratings_by_review(db, review_id=review_id)

@@ -135,53 +135,59 @@ def seed_data():
                 db.add(energy)
                 db.commit()
 
-                # Создаем отзывы
+                # Создаем отзыв
                 reviews = [
-                    models.Review(  # Обязательный отзыв от первого пользователя
-                        user_id=users[0].id,
+                    models.Review(
+                        user_id=users[0].id, #первый юзер
                         energy_id=energy.id,
                         review_text=row["description"],
                         created_at=datetime.strptime(row["date"], "%Y-%m-%d")
-                    )
+                    ),
+                     models.Review(
+                        user_id=users[1].id, #второй юзер
+                        energy_id=energy.id,
+                        review_text=random_description(), # Создает рандомное описание из набора букв
+                        created_at=datetime.now()
+                    ),
                 ]
-
-                # Случайное решение: второй пользователь оставляет отзыв (50% шанс)
-                if random.choice([True, False]):
-                    reviews.append(
-                        models.Review(
-                            user_id=users[1].id,
-                            energy_id=energy.id,
-                            review_text=random_description(),
-                            created_at=datetime.now()
-                        )
-                    )
-
-                # Добавляем ВСЕ созданные отзывы разом
+                
                 db.add_all(reviews)
                 db.commit()
 
-                # Создаем оценки ТОЛЬКО для существующих отзывов
-                ratings = []
-                for review in reviews:  # Цикл только по реальным отзывам
-                    # Генерируем оценки в зависимости от пользователя
-                    if review.user_id == users[0].id:
-                        # Для первого берем данные из CSV
-                        rating_values = [float(row["rating"])] * 3
-                    else:
-                        # Для второго случайные значения
-                        rating_values = [generate_rating_value() for _ in range(3)]
-                    
-                    # Привязываем оценки к критериям
-                    for criteria_id, rating_value in zip([c.id for c in criteria], rating_values):
-                        ratings.append(
-                            models.Rating(
-                                review_id=review.id,
-                                criteria_id=criteria_id,
-                                rating_value=rating_value
-                            )
-                        )
+                # Создаем оценки
+                ratings = [
+                    models.Rating(
+                        review_id=reviews[0].id,
+                        criteria_id=criteria[0].id,
+                        rating_value=float(row["rating"]) # оценка по вкусу первого юзера
+                    ),
+                    models.Rating(
+                        review_id=reviews[0].id,
+                        criteria_id=criteria[1].id,
+                        rating_value=float(row["rating"]) # оценка по цене первого юзера
+                    ),
+                    models.Rating(
+                        review_id=reviews[0].id,
+                        criteria_id=criteria[2].id,
+                        rating_value=float(row["rating"]) # оценка по химозе первого юзера
+                    ),
 
-                # Добавляем все оценки
+                    models.Rating(
+                        review_id=reviews[1].id,
+                        criteria_id=criteria[0].id,
+                        rating_value=generate_rating_value()  # Генерация с округлением (оценка по вкусу второго юзера)
+                    ),
+                    models.Rating(
+                        review_id=reviews[1].id,
+                        criteria_id=criteria[1].id,
+                        rating_value=generate_rating_value()  # Генерация с округлением (оценка по цене второго юзера)
+                    ),
+                    models.Rating(
+                        review_id=reviews[1].id,
+                        criteria_id=criteria[2].id,
+                        rating_value=generate_rating_value()  # Генерация с округлением (оценка по химозе второго юзера)
+                    )
+                ]
                 db.add_all(ratings)
                 db.commit()
 
