@@ -2,6 +2,22 @@ from pydantic import BaseModel, Field, condecimal
 from typing import Optional, List
 from datetime import datetime
 
+# =============== ТОПЫ ===============
+class EnergyTop(BaseModel):
+    id: int
+    name: str
+    average_rating: condecimal(ge=0, le=10, decimal_places=4)
+    brand: Brand
+    category: Optional[Category] = None
+
+    class Config:
+        from_attributes = True
+
+class BrandTop(BaseModel):
+    id: int
+    name: str
+    average_rating: condecimal(ge=0, le=10, decimal_places=4)
+
 # =============== БРЕНДЫ ===============
 class BrandBase(BaseModel):
     name: str = Field(..., max_length=255)
@@ -10,18 +26,6 @@ class BrandCreate(BrandBase):
     pass
 
 class Brand(BrandBase):
-    id: int
-    class Config:
-        from_attributes = True
-
-# =============== КАТЕГОРИИ ===============
-class CategoryBase(BaseModel):
-    name: str = Field(..., max_length=100)
-
-class CategoryCreate(CategoryBase):
-    pass
-
-class Category(CategoryBase):
     id: int
     class Config:
         from_attributes = True
@@ -61,15 +65,13 @@ class User(UserBase):
     class Config:
         from_attributes = True
 
-# =============== КРИТЕРИИ ===============
-class CriteriaBase(BaseModel):
-    name: str = Field(..., max_length=100)
-
-class CriteriaCreate(CriteriaBase):
-    pass
-
-class Criteria(CriteriaBase):
-    id: int
+# =============== ПРОФИЛЬ ===============
+class UserProfile(BaseModel):
+    user: User
+    total_ratings: int
+    average_rating: Optional[condecimal(ge=0, le=10, decimal_places=4)] = None
+    favorite_brand: Optional[Brand] = None
+    favorite_energy: Optional[Energy] = None
     class Config:
         from_attributes = True
 
@@ -99,29 +101,28 @@ class Rating(RatingBase):
     created_at: datetime
     class Config:
         from_attributes = True
+    
+# =============== КАТЕГОРИИ ===============
+class CategoryBase(BaseModel):
+    name: str = Field(..., max_length=100)
 
-# =============== ПРОФИЛЬ ===============
-class UserProfile(BaseModel):
-    user: User
-    total_ratings: int
-    average_rating: Optional[condecimal(ge=0, le=10, decimal_places=4)] = None
-    favorite_brand: Optional[Brand] = None
-    favorite_energy: Optional[Energy] = None
+class CategoryCreate(CategoryBase):
+    pass
+
+class Category(CategoryBase):
+    id: int
     class Config:
         from_attributes = True
 
-# =============== ТОПЫ ===============
-class EnergyTop(BaseModel):
-    id: int
-    name: str
-    average_rating: condecimal(ge=0, le=10, decimal_places=4)
-    brand: Brand
-    category: Optional[Category] = None
 
+# =============== КРИТЕРИИ ===============
+class CriteriaBase(BaseModel):
+    name: str = Field(..., max_length=100)
+
+class CriteriaCreate(CriteriaBase):
+    pass
+
+class Criteria(CriteriaBase):
+    id: int
     class Config:
         from_attributes = True
-
-class BrandTop(BaseModel):
-    id: int
-    name: str
-    average_rating: condecimal(ge=0, le=10, decimal_places=4)

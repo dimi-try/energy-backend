@@ -3,6 +3,43 @@ from sqlalchemy import func, desc
 from . import models, schemas
 from typing import Dict, Any
 
+# ========================= TOP RATINGS =========================
+def get_top_energies(db: Session, limit: int = 100):
+    subquery = (
+        db.query(
+            models.Review.energy_id,
+        func.round(func.avg(models.Rating.rating_value), 4).label('avg_rating')  # Округление до 4 знаков
+        )
+        .join(models.Rating)
+        .group_by(models.Review.energy_id)
+        .subquery()
+    )
+
+    return (
+        db.query(
+            models.Energy,
+            func.coalesce(subquery.c.avg_rating, 0).label('average_rating')
+        )
+        .outerjoin(subquery, models.Energy.id == subquery.c.energy_id)
+        .order_by(desc('average_rating'))
+        .limit(limit)
+        .all()
+    )
+
+def get_top_brands(db: Session, limit: int = 100):
+    return db.query(
+        models.Brand.id,
+        models.Brand.name,
+        func.round(func.avg(models.Rating.rating_value), 4).label('average_rating')
+    ).select_from(models.Brand)\
+     .join(models.Energy, models.Brand.id == models.Energy.brand_id)\
+     .join(models.Review, models.Energy.id == models.Review.energy_id)\
+     .join(models.Rating, models.Review.id == models.Rating.review_id)\
+     .group_by(models.Brand.id)\
+     .order_by(desc('average_rating'))\
+     .limit(limit)\
+     .all()
+
 # ========================= BRANDS =========================
 def get_brand(db: Session, brand_id: int):
     return db.query(models.Brand).filter(models.Brand.id == brand_id).first()
@@ -14,8 +51,8 @@ def get_brands(db: Session, skip: int = 0, limit: int = 100):
 def get_energy(db: Session, energy_id: int):
     return db.query(models.Energy).filter(models.Energy.id == energy_id).first()
 
-def get_energies(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Energy).offset(skip).limit(limit).all()
+# def get_energies(db: Session, skip: int = 0, limit: int = 100):
+#     return db.query(models.Energy).offset(skip).limit(limit).all()
 
 def get_energies_by_brand(db: Session, brand_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.Energy).filter(models.Energy.brand_id == brand_id).offset(skip).limit(limit).all()
@@ -37,6 +74,62 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.commit()
     db.refresh(db_user)
     return db_user
+
+# ========================= USER PROFILE =========================
+def get_user_profile(db: Session, user_id: int) -> Dict[str, Any]:
+    user = db.query(models.User).get(user_id)
+    if not user:
+        return None
+
+    # Статистика по оценкам
+    reviews = db.query(models.Review).filter(models.Review.user_id == user_id).all()
+    total_rated = len(reviews)
+    
+    if total_rated == 0:
+        return {
+            "user": user,
+            "total_ratings": 0,
+            "average_rating": None,
+            "favorite_brand": None,
+            "favorite_energy": None
+        }
+
+    # Расчет среднего рейтинга
+    total_rating = 0
+    brand_stats = {}
+    energy_stats = {}
+
+    for review in reviews:
+        ratings = db.query(models.Rating).filter(models.Rating.review_id == review.id).all()
+        for rating in ratings:
+            total_rating += rating.rating_value
+            
+            # Статистика по брендам
+            energy = db.query(models.Energy).get(review.energy_id)
+            brand_id = energy.brand_id
+            brand_stats[brand_id] = brand_stats.get(brand_id, 0) + rating.rating_value
+            
+            # Статистика по энергетикам
+            energy_stats[review.energy_id] = energy_stats.get(review.energy_id, 0) + rating.rating_value
+
+    average_rating = total_rating / (total_rated * len(db.query(models.Criteria).all()))
+
+    # Любимый бренд
+    favorite_brand_id = max(brand_stats, key=brand_stats.get) if brand_stats else None
+    favorite_brand = db.query(models.Brand).get(favorite_brand_id) if favorite_brand_id else None
+
+    # Любимый энергетик
+    favorite_energy_id = max(energy_stats, key=energy_stats.get) if energy_stats else None
+    favorite_energy = db.query(models.Energy).get(favorite_energy_id) if favorite_energy_id else None
+
+    return {
+        "user": user,
+        "total_ratings": total_rated,
+        "average_rating": round(average_rating, 1),
+        "favorite_brand": favorite_brand,
+        "favorite_energy": favorite_energy
+    }
+
 
 # ========================= REVIEWS & RATINGS =========================
 def create_review_with_ratings(db: Session, review: schemas.ReviewCreate):
@@ -101,95 +194,3 @@ def get_category_by_name(db: Session, name: str):
 
 def get_categories(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Category).offset(skip).limit(limit).all()
-
-# ========================= USER PROFILE =========================
-def get_user_profile(db: Session, user_id: int) -> Dict[str, Any]:
-    user = db.query(models.User).get(user_id)
-    if not user:
-        return None
-
-    # Статистика по оценкам
-    reviews = db.query(models.Review).filter(models.Review.user_id == user_id).all()
-    total_rated = len(reviews)
-    
-    if total_rated == 0:
-        return {
-            "user": user,
-            "total_ratings": 0,
-            "average_rating": None,
-            "favorite_brand": None,
-            "favorite_energy": None
-        }
-
-    # Расчет среднего рейтинга
-    total_rating = 0
-    brand_stats = {}
-    energy_stats = {}
-
-    for review in reviews:
-        ratings = db.query(models.Rating).filter(models.Rating.review_id == review.id).all()
-        for rating in ratings:
-            total_rating += rating.rating_value
-            
-            # Статистика по брендам
-            energy = db.query(models.Energy).get(review.energy_id)
-            brand_id = energy.brand_id
-            brand_stats[brand_id] = brand_stats.get(brand_id, 0) + rating.rating_value
-            
-            # Статистика по энергетикам
-            energy_stats[review.energy_id] = energy_stats.get(review.energy_id, 0) + rating.rating_value
-
-    average_rating = total_rating / (total_rated * len(db.query(models.Criteria).all()))
-
-    # Любимый бренд
-    favorite_brand_id = max(brand_stats, key=brand_stats.get) if brand_stats else None
-    favorite_brand = db.query(models.Brand).get(favorite_brand_id) if favorite_brand_id else None
-
-    # Любимый энергетик
-    favorite_energy_id = max(energy_stats, key=energy_stats.get) if energy_stats else None
-    favorite_energy = db.query(models.Energy).get(favorite_energy_id) if favorite_energy_id else None
-
-    return {
-        "user": user,
-        "total_ratings": total_rated,
-        "average_rating": round(average_rating, 1),
-        "favorite_brand": favorite_brand,
-        "favorite_energy": favorite_energy
-    }
-
-# ========================= TOP RATINGS =========================
-def get_top_energies(db: Session, limit: int = 100):
-    subquery = (
-        db.query(
-            models.Review.energy_id,
-        func.round(func.avg(models.Rating.rating_value), 4).label('avg_rating')  # Округление до 4 знаков
-        )
-        .join(models.Rating)
-        .group_by(models.Review.energy_id)
-        .subquery()
-    )
-
-    return (
-        db.query(
-            models.Energy,
-            func.coalesce(subquery.c.avg_rating, 0).label('average_rating')
-        )
-        .outerjoin(subquery, models.Energy.id == subquery.c.energy_id)
-        .order_by(desc('average_rating'))
-        .limit(limit)
-        .all()
-    )
-
-def get_top_brands(db: Session, limit: int = 100):
-    return db.query(
-        models.Brand.id,
-        models.Brand.name,
-        func.round(func.avg(models.Rating.rating_value), 4).label('average_rating')
-    ).select_from(models.Brand)\
-     .join(models.Energy, models.Brand.id == models.Energy.brand_id)\
-     .join(models.Review, models.Energy.id == models.Review.energy_id)\
-     .join(models.Rating, models.Review.id == models.Rating.review_id)\
-     .group_by(models.Brand.id)\
-     .order_by(desc('average_rating'))\
-     .limit(limit)\
-     .all()
