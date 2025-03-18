@@ -79,13 +79,25 @@ def seed_data():
                 is_premium=False,
                 created_at=datetime.now()
             ),
+            #=====Раскоментить, если хотим только одного тестового пользователя=====
+
             models.User(
                 username="test_user_2",
                 email="user2@example.com",
                 password="password2",
                 is_premium=True,
                 created_at=datetime.now()
+            ),
+
+            models.User(
+                username="test_user_3",
+                email="user3@example.com",
+                password="password3",
+                is_premium=True,
+                created_at=datetime.now()
             )
+            
+            #=======================================================================
         ]
         db.add_all(users)
         db.commit()
@@ -145,6 +157,8 @@ def seed_data():
                     )
                 ]
 
+                #=====Раскоментить, если хотим только одного тестового пользователя=====
+
                 # Случайное решение: второй пользователь оставляет отзыв (50% шанс)
                 if random.choice([True, False]):
                     reviews.append(
@@ -155,6 +169,8 @@ def seed_data():
                             created_at=datetime.now()
                         )
                     )
+
+                #=======================================================================
 
                 # Добавляем ВСЕ созданные отзывы разом
                 db.add_all(reviews)
