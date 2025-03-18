@@ -1,24 +1,126 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, distinct
 from . import models, schemas
 from typing import Dict, Any
 
 # ========================= BRANDS =========================
 def get_brand(db: Session, brand_id: int):
-    return db.query(models.Brand).filter(models.Brand.id == brand_id).first()
+    """
+    - Средний рейтинг = среднее от средних оценок энергетиков
+    - Только энергетики с оценками учитываются в расчете
+    """
+    
+    # Тот же подзапрос, что и в get_top_brands
+    energy_avg_subquery = (
+        db.query(
+            models.Energy.brand_id,
+            func.avg(models.Rating.rating_value).label("energy_avg_rating")
+        )
+        .join(models.Review, models.Energy.id == models.Review.energy_id)
+        .join(models.Rating, models.Review.id == models.Rating.review_id)
+        .group_by(models.Energy.id)
+        .subquery()
+    )
+
+    result = (
+        db.query(
+            models.Brand,
+            # Среднее от средних оценок энергетиков (как в get_top_brands)
+            func.round(func.avg(energy_avg_subquery.c.energy_avg_rating), 4).label("average_rating"),
+            # Общее количество энергетиков
+            func.count(distinct(models.Energy.id)).label("energy_count"),
+            # Количество энергетиков с оценками
+            func.count(distinct(energy_avg_subquery.c.energy_avg_rating)).label("rated_energy_count"),
+            # Общее количество отзывов
+            func.count(distinct(models.Review.id)).label("review_count"),
+            # Общее количество оценок
+            func.count(distinct(models.Rating.id)).label("rating_count"),
+        )
+        .outerjoin(models.Energy, models.Brand.id == models.Energy.brand_id)
+        .outerjoin(energy_avg_subquery, models.Brand.id == energy_avg_subquery.c.brand_id)
+        .outerjoin(models.Review, models.Energy.id == models.Review.energy_id)
+        .outerjoin(models.Rating, models.Review.id == models.Rating.review_id)
+        .filter(models.Brand.id == brand_id)
+        .group_by(models.Brand.id)
+        .first()
+    )
+
+    if result:
+        brand, avg_rating, energy_count, rated_energy_count, review_count, rating_count = result
+        
+        # Полная синхронизация логики с get_top_brands
+        final_rating = round(float(avg_rating), 4) if avg_rating and rated_energy_count > 0 else 0.0
+        
+        # Добавляем вычисленные поля в объект бренда
+        brand.average_rating = final_rating
+        brand.energy_count = energy_count or 0
+        brand.rated_energy_count = rated_energy_count or 0
+        brand.review_count = review_count or 0
+        brand.rating_count = rating_count or 0
+        
+        return brand
+    return None
 
 def get_brands(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Brand).offset(skip).limit(limit).all()
 
 # ========================= ENERGIES =========================
 def get_energy(db: Session, energy_id: int):
-    return db.query(models.Energy).filter(models.Energy.id == energy_id).first()
+    result = db.query(
+        models.Energy,
+        func.coalesce(func.round(func.avg(models.Rating.rating_value), 4).label('average_rating'))
+    ).outerjoin(models.Review, models.Energy.id == models.Review.energy_id)\
+     .outerjoin(models.Rating, models.Review.id == models.Rating.review_id)\
+     .filter(models.Energy.id == energy_id)\
+     .group_by(models.Energy.id)\
+     .first()
+
+    if result:
+        energy, avg_rating = result
+        energy.average_rating = float(avg_rating) if avg_rating else 0.0
+        return energy
+    return None
+
+
 
 def get_energies(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Energy).offset(skip).limit(limit).all()
 
 def get_energies_by_brand(db: Session, brand_id: int, skip: int = 0, limit: int = 100):
-    return db.query(models.Energy).filter(models.Energy.brand_id == brand_id).offset(skip).limit(limit).all()
+    """
+    Получает все энергетики бренда с:
+    - Средним рейтингом
+    - Количеством отзывов
+    - Сортировкой по рейтингу
+    """
+    results = (
+        db.query(
+            models.Energy,
+            # Средний рейтинг энергетика
+            func.coalesce(func.round(func.avg(models.Rating.rating_value), 4), 0).label("average_rating"),
+            # Количество отзывов для энергетика
+            func.count(distinct(models.Review.id)).label("review_count"),
+        )
+        .filter(models.Energy.brand_id == brand_id)
+        .outerjoin(models.Review, models.Energy.id == models.Review.energy_id)
+        .outerjoin(models.Rating, models.Review.id == models.Rating.review_id)
+        .group_by(models.Energy.id)
+        .order_by(desc("average_rating"))
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+    return [
+        {
+            **energy.__dict__,
+            "average_rating": float(average_rating),
+            "review_count": review_count,
+            "brand": energy.brand,
+            "category": energy.category,
+        }
+        for energy, average_rating, review_count in results
+    ]
 
 # ========================= USERS =========================
 def get_user(db: Session, user_id: int):
@@ -37,6 +139,13 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.commit()
     db.refresh(db_user)
     return db_user
+
+# проверка на то был ли отзыв написан юзером или нет
+def get_review_by_user_and_energy(db: Session, user_id: int, energy_id: int):
+    return db.query(models.Review).filter(
+        models.Review.user_id == user_id,
+        models.Review.energy_id == energy_id
+    ).first()
 
 # ========================= REVIEWS & RATINGS =========================
 def create_review_with_ratings(db: Session, review: schemas.ReviewCreate):
@@ -189,7 +298,13 @@ def get_top_energies(db: Session, limit: int = 100):
         )
         .outerjoin(avg_rating_subquery, models.Energy.id == avg_rating_subquery.c.energy_id)  # Присоединяем подзапрос со средним рейтингом
         .outerjoin(review_count_subquery, models.Energy.id == review_count_subquery.c.energy_id)  # Присоединяем подзапрос с количеством отзывов
-        .order_by(desc('average_rating'))  # Сортируем результаты по убыванию среднего рейтинга
+        .join(models.Brand)  # Явно присоединяем таблицу Brand для сортировки по бренду
+        .order_by(
+            desc('average_rating'),  # Сортируем по убыванию среднего рейтинга
+            desc('review_count'),  # Затем по убыванию количества отзывов
+            models.Brand.name,  # Затем по названию бренда (по возрастанию)
+            models.Energy.name  # Затем по названию энергетика (по возрастанию)
+        )
         .limit(limit)  # Ограничиваем количество результатов значением limit
         .all()  # Выполняем запрос и получаем все результаты
     )
@@ -205,15 +320,57 @@ def get_top_energies(db: Session, limit: int = 100):
     } for energy, avg_rating, review_count in energies]  # Проходим по каждому результату и формируем словарь
 
 def get_top_brands(db: Session, limit: int = 100):
-    return db.query(
-        models.Brand.id,
-        models.Brand.name,
-        func.round(func.avg(models.Rating.rating_value), 4).label('average_rating')
-    ).select_from(models.Brand)\
-     .join(models.Energy, models.Brand.id == models.Energy.brand_id)\
-     .join(models.Review, models.Energy.id == models.Review.energy_id)\
-     .join(models.Rating, models.Review.id == models.Rating.review_id)\
-     .group_by(models.Brand.id)\
-     .order_by(desc('average_rating'))\
-     .limit(limit)\
-     .all()
+    """
+    Получает топ брендов с:
+    - Средним рейтингом (правильный расчет)
+    - Количеством энергетиков
+    - Количеством отзывов
+    - Количеством оценок
+    - Сортировкой по рейтингу
+    """
+    # Подзапрос для средних рейтингов энергетиков
+    energy_avg_subquery = (
+        db.query(
+            models.Energy.brand_id,
+            func.avg(models.Rating.rating_value).label("energy_avg_rating"),
+        )
+        .outerjoin(models.Review, models.Energy.id == models.Review.energy_id)
+        .outerjoin(models.Rating, models.Review.id == models.Rating.review_id)
+        .group_by(models.Energy.id)
+        .subquery()
+    )
+
+    results = (
+        db.query(
+            models.Brand.id,
+            models.Brand.name,
+            # Средний рейтинг бренда
+            func.coalesce(func.round(func.avg(energy_avg_subquery.c.energy_avg_rating), 4), 0).label("average_rating"),
+            # Количество энергетиков
+            func.count(distinct(models.Energy.id)).label("energy_count"),
+            # Количество отзывов
+            func.count(distinct(models.Review.id)).label("review_count"),
+            # Количество оценок
+            func.count(distinct(models.Rating.id)).label("rating_count"),
+        )
+        .outerjoin(models.Energy, models.Brand.id == models.Energy.brand_id)
+        .outerjoin(energy_avg_subquery, models.Brand.id == energy_avg_subquery.c.brand_id)
+        .outerjoin(models.Review, models.Energy.id == models.Review.energy_id)
+        .outerjoin(models.Rating, models.Review.id == models.Rating.review_id)
+        .group_by(models.Brand.id)
+        .order_by(desc("average_rating"))
+        .limit(limit)
+        .all()
+    )
+
+    return [
+        {
+            "id": brand_id,
+            "name": name,
+            "average_rating": float(average_rating),
+            "energy_count": energy_count,
+            "review_count": review_count,
+            "rating_count": rating_count,
+        }
+        for brand_id, name, average_rating, energy_count, review_count, rating_count in results
+    ]

@@ -11,6 +11,18 @@ class BrandCreate(BrandBase):
 
 class Brand(BrandBase):
     id: int
+    average_rating: Optional[float] = None
+    energy_count: Optional[int] = None
+    review_count: Optional[int] = None
+    rating_count: Optional[int] = None
+    class Config:
+        from_attributes = True
+
+# эта модель без статистики брендов специально для 
+# списка всех энов принадлежащих определенному бренду
+# /brands/{brand_id}/energies/
+class BrandAndEnergies(BrandBase):
+    id: int
     class Config:
         from_attributes = True
 
@@ -35,6 +47,8 @@ class EnergyBase(BaseModel):
     ingredients: Optional[str] = None
     image_url: Optional[str] = None
     energy_type: str = Field("regular", description="Type: alcoholic, regular, sugar_free")
+    average_rating: Optional[float] = None
+    review_count: Optional[int] = None
 
 class EnergyCreate(EnergyBase):
     pass
@@ -42,6 +56,15 @@ class EnergyCreate(EnergyBase):
 class Energy(EnergyBase):
     id: int
     brand: Brand
+    category: Optional[Category]
+    class Config:
+        from_attributes = True
+
+# в этой модели нет статистики брендов, потому что это уже 
+# для списка энергетиков, принадлежащих определенному бренду
+class EnergiesByBrand(EnergyBase):
+    id: int
+    brand: BrandAndEnergies
     category: Optional[Category]
     class Config:
         from_attributes = True
@@ -126,3 +149,6 @@ class BrandTop(BaseModel):
     id: int
     name: str
     average_rating: condecimal(ge=0, le=10, decimal_places=4)
+    energy_count: Optional[int] = None
+    review_count: Optional[int] = None
+    rating_count: Optional[int] = None
