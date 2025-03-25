@@ -3,12 +3,7 @@ from logging.config import fileConfig
 from sqlalchemy import create_engine, pool
 from alembic import context
 from dotenv import load_dotenv
-
-# Загружаем переменные окружения
-load_dotenv()
-
-# Получаем строку подключения
-DATABASE_URL = os.getenv("DATABASE_URL")
+from config import DATABASE_URL
 
 # Подключаем конфигурацию Alembic
 config = context.config
