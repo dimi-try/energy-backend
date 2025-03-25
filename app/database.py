@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
-from config import DATABASE_URL
+from .config import DATABASE_URL
 
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL не задан! Проверь .env файл или переменные окружения.")
