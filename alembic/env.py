@@ -3,7 +3,7 @@ from logging.config import fileConfig
 from sqlalchemy import create_engine, pool
 from alembic import context
 from dotenv import load_dotenv
-from .config import DATABASE_URL
+from app.config import DATABASE_URL
 
 # Подключаем конфигурацию Alembic
 config = context.config

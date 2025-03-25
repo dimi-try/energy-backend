@@ -9,7 +9,7 @@ from alembic.config import Config
 from alembic import command
 from app import models  # Импорт моделей SQLAlchemy
 from decimal import Decimal, ROUND_HALF_UP #для округления
-from .config import DATABASE_URL
+from app.config import DATABASE_URL
 
 # Конфигурация
 engine = create_engine(DATABASE_URL)
