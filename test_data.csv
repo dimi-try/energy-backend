@@ -3,3 +3,14 @@ id,name,model,rating,description,date
 2,Sunset Rush,PowerWave,0.3,"A sharp, invigorating blend of tropical fruits and zesty spices, perfect for a burst of energy with a kick.",2025-01-18
 3,Emerald Fusion,HyperForce,0.1,"A bold and vibrant mix of green apple and lime with a refreshing mint undertone. A revitalizing twist for the daring.",2025-01-03
 4,Golden Glow,StormBlast,0.5,"A smooth, citrusy energy drink with a hint of honey and ginger. The perfect balance of sweet and spicy for an energizing pick-me-up.",2025-01-03
+5,Crimson Surge,VoltMax,0.4,"A fiery combination of pomegranate and chili, crafted for those who crave a bold, adrenaline-fueled rush.",2025-02-11
+6,Azure Storm,NeonBolt,0.2,"A striking blend of blueberry and acai, infused with a touch of electrifying guarana for sustained energy.",2025-02-25
+7,Inferno Blaze,PowerWave,0.6,"A scorching mix of blood orange and cinnamon, designed to ignite your senses and fuel your ambitions.",2025-03-08
+8,Shadow Pulse,HyperForce,0.3,"A mysterious fusion of black cherry and licorice, bringing a deep, complex taste with an intense energy kick.",2025-03-15
+9,Tropical Fury,StormBlast,0.7,"A wild explosion of pineapple and passion fruit, perfectly blended for a long-lasting tropical energy surge.",2025-03-22
+10,Neon Flash,ThunderX,0.5,"A dazzling fusion of citrus and green tea extract, offering a vibrant, smooth energy boost with a refreshing aftertaste.",2025-04-02
+11,Arctic Shock,VoltMax,0.2,"A chilling blend of peppermint and eucalyptus, delivering an icy burst of energy to keep you alert and focused.",2025-04-10
+12,Velvet Thunder,NeonBolt,0.4,"A rich, velvety combination of dark chocolate and espresso, crafted for a smooth, indulgent energy experience.",2025-04-18
+13,Ruby Charge,PowerWave,0.6,"A bold fusion of raspberry and hibiscus, providing a tart yet floral burst of invigorating power.",2025-04-27
+14,Cyber Boost,HyperForce,0.3,"A futuristic blend of dragon fruit and lychee, enhanced with cutting-edge energy compounds for ultimate performance.",2025-05-05
+15,Gravity Surge,StormBlast,0.8,"An earth-shattering combination of caramelized pear and vanilla, delivering a deep, rich energy surge.",2025-05-12
