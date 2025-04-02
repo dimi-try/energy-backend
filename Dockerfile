@@ -1,24 +1,30 @@
-# Указываем Docker, чтобы использовать Python для бэкенда
-FROM python:3.13-slim
+# --- Этап сборки ---
+FROM python:3.13-alpine as builder
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
 # Устанавливаем зависимости для работы с базой данных
-RUN apt-get update && apt-get install -y \
-    libpq-dev \
+RUN apk add --no-cache \
+    postgresql-dev \
     gcc \
-    python3-dev
+    musl-dev
 
 # Копируем файл зависимостей
 COPY requirements.txt .
 
 # Устанавливаем зависимости
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# Добавляем путь к локально установленным пакетам в переменную среды PATH
-ENV PATH="/root/.local/bin:$PATH"
+# --- Финальный образ ---
+FROM python:3.13-alpine
+
+# Устанавливаем рабочую директорию
+WORKDIR /app
+
+RUN apk add --no-cache libpq
+
+COPY --from=builder /install /usr/local
 
 # Копируем весь код
 COPY . .
