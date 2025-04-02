@@ -1,38 +1,18 @@
-# Этап 1: Сборка зависимостей
-FROM python:3.13-slim as builder
+# Используем легковесный образ Python на основе Alpine для минимального размера
+FROM python:3.13-alpine
 
+# Устанавливаем рабочую директорию внутри контейнера
 WORKDIR /app
 
-# Устанавливаем только необходимые для сборки пакеты и чистим за собой
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    libpq-dev \
-    gcc \
-    python3-dev && \
-    rm -rf /var/lib/apt/lists/*
-
+# Копируем файл зависимостей в рабочую директорию
 COPY requirements.txt .
 
-# Устанавливаем зависимости в отдельную директорию
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+# Устанавливаем postgresql-libs для работы psycopg2-binary и asyncpg, затем ставим Python-зависимости
+RUN apk add --no-cache postgresql-libs && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Этап 2: Финальный образ
-FROM python:3.13-slim
-
-WORKDIR /app
-
-# Копируем только необходимые артефакты из builder
-COPY --from=builder /install /usr/local
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libpq.so* /usr/lib/x86_64-linux-gnu/
-
-# Устанавливаем только runtime-зависимости
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    libpq5 && \
-    rm -rf /var/lib/apt/lists/*
-
-# Копируем код приложения
+# Копируем весь исходный код приложения
 COPY . .
 
-# Запускаем приложение
+# Запускаем FastAPI-приложение через uvicorn на всех интерфейсах
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
