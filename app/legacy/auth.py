@@ -12,9 +12,9 @@ from typing import Optional
 load_dotenv()
 
 # Получаем секретный ключ, алгоритм шифрования и токен бота из переменных окружения
-SECRET_KEY = os.getenv('SECRET_KEY')
-ALGORITHM = os.getenv('ALGORITHM')
-BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+BACKEND_SECRET_KEY = os.getenv('BACKEND_SECRET_KEY')
+BACKEND_ALGORITHM = os.getenv('BACKEND_ALGORITHM')
+BOT_TOKEN = os.getenv('BOT_TOKEN')
 
 # Функция для создания JWT-токена (токена доступа)
 def create_access_token(data: dict, expires_delta: Optional[float] = None):
@@ -24,14 +24,14 @@ def create_access_token(data: dict, expires_delta: Optional[float] = None):
     expire = time.time() + expires_delta if expires_delta else time.time() + 3600
     to_encode.update({"exp": expire})
     # Кодируем JWT с использованием секретного ключа и указанного алгоритма
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, BACKEND_SECRET_KEY, algorithm=BACKEND_ALGORITHM)
     return encoded_jwt
 
 # Функция для верификации JWT-токена
 def verify_token(token: str):
     try:
         # Декодируем токен с использованием секретного ключа и алгоритма
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, BACKEND_SECRET_KEY, algorithms=[BACKEND_ALGORITHM])
         return payload
     except JWTError:
         # Если произошла ошибка декодирования, возвращаем ошибку 401 (Unauthorized)
