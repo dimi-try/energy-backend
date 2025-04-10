@@ -235,6 +235,8 @@ class ReviewBase(BaseModel):
     energy_id: int
     # Поле user_id: идентификатор пользователя, оставившего отзыв
     user_id: int
+    # Информация о пользователе (его имя)
+    user: UserBase
     # Поле review_text: текст отзыва, обязательное
     review_text: str
 
