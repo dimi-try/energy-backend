@@ -171,7 +171,7 @@ def get_energies_by_brand(db: Session, brand_id: int, skip: int = 0, limit: int 
             # Вычисляем средний рейтинг энергетика, если нет данных — 0
             func.coalesce(func.round(func.avg(models.Rating.rating_value), 4), 0).label("average_rating"),
             # Считаем количество уникальных отзывов для энергетика
-            func.count(distinct(models.Review.id)).label("review_count"),
+            func.count(distinct(models.Review.id)).label("review_count")
         )
         # Фильтруем по указанному brand_id
         .filter(models.Energy.brand_id == brand_id)
