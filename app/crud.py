@@ -117,8 +117,9 @@ def get_energy(db: Session, energy_id: int):
             # Выбираем объект Energy
             models.Energy,
             # Вычисляем средний рейтинг энергетика с округлением до 4 знаков, если нет данных — 0
-            func.coalesce(func.round(func.avg(models.Rating.rating_value), 4), 0).label('average_rating')
-        
+            func.coalesce(func.round(func.avg(models.Rating.rating_value), 4), 0).label('average_rating'),
+            # Считаем количество отзывов
+            func.count(distinct(models.Review.id)).label('review_count')
         )
         # Левое соединение с таблицей Review по energy_id
         .outerjoin(models.Review, models.Energy.id == models.Review.energy_id)\
@@ -134,9 +135,11 @@ def get_energy(db: Session, energy_id: int):
     # Проверяем, есть ли результат
     if result:
         # Распаковываем результат в объект энергетика и средний рейтинг
-        energy, avg_rating = result
+        energy, avg_rating, review_count = result
         # Добавляем средний рейтинг в объект, преобразуем в float, если None — 0
         energy.average_rating = float(avg_rating) if avg_rating else 0.0
+        # Добавляем количество отзывов
+        energy.review_count = review_count
         # Возвращаем объект энергетика
         return energy
     # Если результата нет, возвращаем None

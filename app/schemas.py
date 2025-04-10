@@ -106,8 +106,6 @@ class EnergyBase(BaseModel):
     ingredients: Optional[str] = None
     # Поле image_url: URL изображения энергетика, необязательное
     image_url: Optional[str] = None
-    # Поле energy_type: тип энергетика, по умолчанию "regular", с описанием возможных значений
-    energy_type: str = Field("regular", description="Type: alcoholic, regular, sugar_free")
     # Поле average_rating: средний рейтинг энергетика, необязательное
     average_rating: Optional[float] = None
     # Поле review_count: количество отзывов на энергетик, необязательное
