@@ -1,5 +1,5 @@
 # Импортируем APIRouter из FastAPI для создания маршрутов
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 # Импортируем Session из SQLAlchemy для работы с базой данных
 from sqlalchemy.orm import Session
 # Импортируем модули crud, models и schemas из текущего пакета
@@ -270,3 +270,43 @@ def get_top_brands(db: Session = Depends(get_db)):
 # @router.get("/reviews/{review_id}/ratings/", response_model=List[schemas.Rating])
 # def read_review_ratings(review_id: int, db: Session = Depends(get_db)):
 #     return crud.get_ratings_by_review(db, review_id=review_id)
+
+# ========================= AUTH =========================
+# Импортируем зависимости из файла авторизации
+from app.legacy.auth import create_access_token, verify_token, validate
+import time
+import urllib.parse
+
+# Эндпоинт для проверки авторизации
+@router.post("/auth/verify")
+async def authorization_test(request: Request):
+    # Извлекаем данные из запроса
+    authorization_data = await request.json()
+    # print(authorization_data)
+    # Парсим данные, чтобы достать hash и auth_date
+    parsed_query = urllib.parse.parse_qs(authorization_data)
+    hash_received = parsed_query.get('hash', [None])[0]
+    auth_date = int(parsed_query.get('auth_date', [0])[0])
+
+    # Проверка наличия хэша
+    if not hash_received:
+        raise HTTPException(status_code=400, detail="Hash not provided")
+
+    # Валидация данных и проверка актуальности хэша
+    if validate(hash_received, authorization_data):
+        # current_unix_time = int(time.time())
+        # timeout_seconds = 3600  # Таймаут на верификацию (1 час)
+        # if current_unix_time - auth_date > timeout_seconds:
+        #     raise HTTPException(status_code=403, detail="Verification failed due to timeout")
+        
+        # Если верификация успешна, создаем токен доступа (JWT)
+        access_token = create_access_token({"sub": "user_id"}, expires_delta=3600)
+        return {"success": True, "message": "Verification successful", "access_token": access_token}
+    else:
+        raise HTTPException(status_code=403, detail="Verification failed")
+
+# Защищенный эндпоинт, доступный только для авторизованных пользователей
+@router.get("/auth/protected")
+async def protected_endpoint(token: str = Depends(verify_token)):
+    # Возвращаем сообщение и данные пользователя, извлеченные из токена
+    return {"message": "Protected content", "user_data": token}
