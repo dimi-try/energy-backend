@@ -69,7 +69,7 @@ def read_energy(energy_id: int, db: Session = Depends(get_db)):
     return db_energy
 
 # Эндпоинт для получения списка энергетиков определенного бренда
-@router.get("/brands/{brand_id}/energies/", response_model=List[schemas.EnergiesByBrand])
+@router.get("/brand/{brand_id}/energies/", response_model=List[schemas.EnergiesByBrand])
 def read_energies_by_brand(brand_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """
     Эндпоинт для получения списка энергетиков, принадлежащих определенному бренду,
