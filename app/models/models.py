@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, Numeric, TIMESTAMP, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from .database import Base
+
+from app.db.database import Base
 
 
 # Таблица брендов энергетиков
