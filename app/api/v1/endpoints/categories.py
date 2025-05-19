@@ -34,6 +34,17 @@ def read_categories(
     # Вызываем функцию для получения списка категорий
     return get_categories(db, skip=skip, limit=limit)
 
+# =============== READ ALL FOR SELECT ===============
+@router.get("/select", response_model=List[Category])
+def read_categories_select(
+    db: Session = Depends(get_db)
+):
+    """
+    Эндпоинт для получения списка всех категорий для выпадающих списков.
+    Доступен всем пользователям.
+    """
+    return get_categories_admin(db)
+    
 # =============== ONLY ADMINS ===============
 
 # =============== CREATE ===============
