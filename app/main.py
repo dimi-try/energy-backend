@@ -1,27 +1,53 @@
+# Импортируем FastAPI для создания приложения
 from fastapi import FastAPI
+# Импортируем CORS middleware для разрешения кросс-доменных запросов
 from fastapi.middleware.cors import CORSMiddleware
+# Импортируем маршруты версии v1
+from app.api.v1.router import api_router
 
-from app.api.v1.router import router as api_router
+# Создаём экземпляр приложения FastAPI
+app = FastAPI(
+    # Устанавливаем заголовок приложения
+    title="Energy Drinks API",
+    # Устанавливаем описание приложения
+    description="API for managing energy drinks, brands, reviews, and user profiles",
+    # Устанавливаем версию API
+    version="1.0.0"
+)
 
-app = FastAPI()
-
+# Определяем список разрешённых источников для CORS
 origins = [
-    "http://localhost",
-    "http://127.0.0.1",
+    # Разрешаем запросы с фронтенда (локальный хост)
+    "http://localhost:3000",
+    # Разрешаем запросы с продакшн-фронтенда (замените на ваш домен)
+    "https://your-frontend-domain.com",
 ]
+origins = ["*"]  # Разрешаем все источники (для разработки)
 
+# Добавляем CORS middleware для обработки кросс-доменных запросов
 app.add_middleware(
+    # Указываем класс middleware
     CORSMiddleware,
-    allow_origins=["*"], # использовать allow_origins=origins на продакшне
+    # Разрешаем указанные источники
+    allow_origins=origins,
+    # Разрешаем отправку куки и заголовков авторизации
     allow_credentials=True,
+    # Разрешаем все HTTP-методы
     allow_methods=["*"],
+    # Разрешаем все заголовки
     allow_headers=["*"],
 )
 
-# Подключаем роуты
-app.include_router(api_router)
+# Подключаем маршруты версии v1 с префиксом /api/v1
+app.include_router(
+    # Указываем маршрутизатор
+    api_router,
+    # Устанавливаем префикс для маршрутов
+    prefix="/api/v1"
+)
 
-# Пример главной страницы
+# Определяем корневой эндпоинт для проверки работы API
 @app.get("/")
-def read_root():
-    return {"Welcome to": "energy database!"}
+async def root():
+    # Возвращаем приветственное сообщение
+    return {"message": "Welcome to the Energy Drinks API"}
