@@ -3,9 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 # Импортируем Session из SQLAlchemy для работы с базой данных
 from sqlalchemy.orm import Session
 # Импортируем функции CRUD для пользователей
-from app.services.users import get_user, create_user, get_user_profile
+from app.services.users import get_user, create_user, get_user_profile, get_user_reviews
 # Импортируем схемы для пользователей
-from app.schemas.user import User, UserCreate, UserProfile
+from app.schemas.user import User, UserCreate, UserProfile, UserReviews
 # Импортируем зависимость для получения сессии базы данных
 from app.db.database import get_db
 
@@ -62,3 +62,25 @@ def get_user_profile_endpoint(
         raise HTTPException(status_code=404, detail="Profile not found")
     # Возвращаем профиль пользователя
     return profile
+
+
+# Определяем эндпоинт для получения отзывов пользователя
+@router.get("/{user_id}/reviews", response_model=UserReviews)
+def get_user_reviews_endpoint(
+    # Параметр пути: ID пользователя
+    user_id: int,
+    # Зависимость: сессия базы данных
+    db: Session = Depends(get_db)
+):
+    """
+    Эндпоинт для получения отзывов пользователя.
+    Доступен только самому пользователю или администраторам.
+    """
+    # Вызываем функцию для получения отзывов пользователя
+    reviews = get_user_reviews(db, user_id=user_id)
+    # Проверяем, существуют ли отзывы
+    if not reviews:
+        # Вызываем исключение, если отзывы не найден
+        raise HTTPException(status_code=404, detail="Reciews not found")
+    # Возвращаем отзывы пользователя
+    return reviews

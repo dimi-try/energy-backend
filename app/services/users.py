@@ -127,3 +127,18 @@ def get_user_profile(db: Session, user_id: int) -> Dict[str, Any]:
         "favorite_brand": favorite_brand,
         "favorite_energy": favorite_energy
     }
+
+# Определяем функцию для получения отзывов пользователя
+def get_user_reviews(db: Session, user_id: int, skip: int = 0, limit: int = 100):
+    # Выполняем запрос к таблице Review
+    query = db.query(Review)
+    # Фильтруем по user_id
+    query = query.filter(Review.user_id == user_id)
+    # Применяем смещение
+    query = query.offset(skip)
+    # Ограничиваем записи
+    query = query.limit(limit)
+    # Получаем все результаты
+    return {
+        "reviews": query.all()
+    }

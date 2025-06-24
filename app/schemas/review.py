@@ -4,8 +4,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 # Импортируем datetime для работы с датами
 from datetime import datetime
-# Импортируем схемы для пользователей, энергетиков и оценок
-from app.schemas.user import UserBase
+# Импортируем базовую модель для отзывов
 from app.schemas.rating import Rating, RatingBase
 
 # Базовая модель для отзывов, содержит общие поля
@@ -16,6 +15,13 @@ class ReviewBase(BaseModel):
     user_id: int
     # Поле review_text: текст отзыва, обязательное
     review_text: str
+    # Поле created_at: дата и время создания отзыва
+    created_at: datetime
+    # Поле ratings: список объектов оценок, связанных с отзывом
+    ratings: List[Rating]
+
+# Импортируем схемы для пользователей
+from app.schemas.user import UserBase
 
 # Модель для создания отзыва, наследуется от ReviewBase
 class ReviewCreate(ReviewBase):
@@ -28,10 +34,6 @@ class Review(ReviewBase):
     id: int
     # Информация о пользователе (его имя)
     user: UserBase
-    # Поле created_at: дата и время создания отзыва
-    created_at: datetime
-    # Поле ratings: список объектов оценок, связанных с отзывом
-    ratings: List[Rating]
     # Внутренний класс Config для настройки модели
     class Config:
         # Указываем, что модель может быть создана из атрибутов ORM-объектов SQLAlchemy
