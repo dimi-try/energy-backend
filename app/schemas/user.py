@@ -8,7 +8,7 @@ from datetime import datetime
 from app.schemas.brand import Brand
 from app.schemas.energy import Energy
 # Импортируем базовую модель для отзывов
-from app.schemas.review import ReviewBase
+from app.schemas.review import ReviewsUser
 
 # =============== ПОЛЬЗОВАТЕЛИ ===============
 # Определяем раздел для моделей, связанных с пользователями
@@ -74,7 +74,7 @@ class UserProfile(BaseModel):
 # Определяем раздел для модели отзывов пользователя
 class UserReviews(BaseModel):
     # Поле reviews: список отзывов пользователя
-    reviews: List[ReviewBase]  # Здесь предполагается, что ReviewBase содержит информацию об отзыве
+    reviews: List[ReviewsUser]  # ReviewsUser содержит информацию об отзыве
     # Внутренний класс Config для настройки модели
     class Config:
         # Указываем, что модель может быть создана из атрибутов ORM-объектов SQLAlchemy

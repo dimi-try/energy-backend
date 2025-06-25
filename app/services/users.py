@@ -130,15 +130,35 @@ def get_user_profile(db: Session, user_id: int) -> Dict[str, Any]:
 
 # Определяем функцию для получения отзывов пользователя
 def get_user_reviews(db: Session, user_id: int, skip: int = 0, limit: int = 100):
-    # Выполняем запрос к таблице Review
-    query = db.query(Review)
-    # Фильтруем по user_id
-    query = query.filter(Review.user_id == user_id)
-    # Применяем смещение
-    query = query.offset(skip)
-    # Ограничиваем записи
-    query = query.limit(limit)
-    # Получаем все результаты
-    return {
-        "reviews": query.all()
-    }
+    # Проверяем существование пользователя
+    user = db.query(User).get(user_id)
+    if not user:
+        return None
+    # Выполняем запрос с присоединением таблиц
+    reviews = (
+        db.query(Review)
+        .filter(Review.user_id == user_id)
+        .join(Energy, Review.energy_id == Energy.id)
+        .join(Brand, Energy.brand_id == Brand.id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    # Формируем результат
+    result = []
+    for review in reviews:
+        # Получаем энергетик
+        energy = db.query(Energy).get(review.energy_id)
+        # Получаем бренд
+        brand = db.query(Brand).get(energy.brand_id)
+        # Получаем оценки
+        ratings = db.query(Rating).filter(Rating.review_id == review.id).all()
+        # Добавляем данные в результат
+        review_dict = review.__dict__
+        review_dict["energy"] = energy.name  # Добавляем только имя энергетика
+        review_dict["brand"] = brand.name  # Добавляем только имя бренда
+        review_dict["ratings"] = ratings
+        result.append(review_dict)
+    # Возвращаем результат
+    return {"reviews": result}
+

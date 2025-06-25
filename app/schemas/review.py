@@ -20,6 +20,17 @@ class ReviewBase(BaseModel):
     # Поле ratings: список объектов оценок, связанных с отзывом
     ratings: List[Rating]
 
+# Модель для отзывов пользователя, содержит информацию об энергетике и бренде
+class ReviewsUser(ReviewBase):
+    # Поле energy: информация об энергетике
+    energy: Optional[str] = None
+    # Поле brand: информация о бренде (через энергетика)
+    brand: Optional[str] = None  # Добавляем название бренда
+    # Внутренний класс Config для настройки модели
+    class Config:
+        # Указываем, что модель может быть создана из атрибутов ORM-объектов SQLAlchemy
+        from_attributes = True
+        
 # Импортируем схемы для пользователей
 from app.schemas.user import UserBase
 
@@ -38,3 +49,4 @@ class Review(ReviewBase):
     class Config:
         # Указываем, что модель может быть создана из атрибутов ORM-объектов SQLAlchemy
         from_attributes = True
+
