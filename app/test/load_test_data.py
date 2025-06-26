@@ -9,7 +9,7 @@ from alembic.config import Config
 from alembic import command
 from decimal import Decimal, ROUND_HALF_UP #для округления
 
-from app.models import models  # Импорт моделей SQLAlchemy
+from app.db.models import *  # Импорт моделей SQLAlchemy
 from app.core.config import DATABASE_URL
 
 # Конфигурация
@@ -73,7 +73,7 @@ def seed_data():
     try:
         # 3.1 Пользователи
         users = [
-            models.User(
+            User(
                 username="test_user_1",
                 email="user1@example.com",
                 password="password1",
@@ -82,7 +82,7 @@ def seed_data():
             ),
             #=====Раскоментить, если хотим только одного тестового пользователя=====
 
-            models.User(
+            User(
                 username="test_user_2",
                 email="user2@example.com",
                 password="password2",
@@ -90,7 +90,7 @@ def seed_data():
                 created_at=datetime.now()
             ),
 
-            models.User(
+            User(
                 username="test_user_3",
                 email="user3@example.com",
                 password="password3",
@@ -105,19 +105,19 @@ def seed_data():
 
         # 3.2 Категории
         categories = [
-            models.Category(name="Алкогольный энергетик"),
-            models.Category(name="Обычный энергетик"),
-            models.Category(name="Энергетик без сахара"),
-            models.Category(name="Чай/Витамины")
+            Category(name="Алкогольный энергетик"),
+            Category(name="Обычный энергетик"),
+            Category(name="Энергетик без сахара"),
+            Category(name="Чай/Витамины")
         ]
         db.add_all(categories)
         db.commit()
 
         # 3.3 Критерии
         criteria = [
-            models.Criteria(name="Вкус"),
-            models.Criteria(name="Цена"),
-            models.Criteria(name="Химоза")
+            Criteria(name="Вкус"),
+            Criteria(name="Цена"),
+            Criteria(name="Химоза")
         ]
         db.add_all(criteria)
         db.commit()
@@ -130,14 +130,14 @@ def seed_data():
                 # Создаем бренд, если его нет
                 brand_name = row["model"].strip()
                 if brand_name not in brands:
-                    brand = models.Brand(name=brand_name)
+                    brand = Brand(name=brand_name)
                     db.add(brand)
                     db.commit()
                     db.refresh(brand)
                     brands[brand_name] = brand.id
 
                 # Создаем энергетик
-                energy = models.Energy(
+                energy = Energy(
                     name=row["name"].strip(),
                     brand_id=brands[brand_name],
                     category_id=random.choice(categories).id,  # Случайная категория
@@ -150,7 +150,7 @@ def seed_data():
 
                 # Создаем отзывы
                 reviews = [
-                    models.Review(  # Обязательный отзыв от первого пользователя
+                    Review(  # Обязательный отзыв от первого пользователя
                         user_id=users[0].id,
                         energy_id=energy.id,
                         review_text=row["description"],
@@ -163,7 +163,7 @@ def seed_data():
                 # Случайное решение: второй пользователь оставляет отзыв (50% шанс)
                 if random.choice([True, False]):
                     reviews.append(
-                        models.Review(
+                        Review(
                             user_id=users[1].id,
                             energy_id=energy.id,
                             review_text=random_description(),
@@ -191,7 +191,7 @@ def seed_data():
                     # Привязываем оценки к критериям
                     for criteria_id, rating_value in zip([c.id for c in criteria], rating_values):
                         ratings.append(
-                            models.Rating(
+                            Rating(
                                 review_id=review.id,
                                 criteria_id=criteria_id,
                                 rating_value=rating_value
