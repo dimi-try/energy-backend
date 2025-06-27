@@ -4,7 +4,7 @@
 
 ## 🛠 Используемые технологии
 
-[![FastAPI](https://skillicons.dev/icons?i=py,fastapi,postgres)](https://skillicons.dev)
+[![Technologies](https://skillicons.dev/icons?i=py,fastapi,postgres)](https://skillicons.dev)
 
 ## 📂 Структура проекта
 
@@ -13,30 +13,54 @@ energy-backend/
 │
 ├── .github/
 │   └── workflows/
-│       └── docker-deploy.yml         # CI/CD: деплой Docker-контейнера
-├── .env                # Переменные окружения
-├── .gitignore          # Исключаемые файлы
-├── README.md           # Документация
+│       └── docker-deploy.yml   # CI/CD: деплой Docker-контейнера
+│
 ├── alembic/
-│   ├── env.py          # Конфигурация Alembic
-│   ├── versions/       # Папка с миграциями
+│   ├── versions/               # Папка с миграциями
+│   └── env.py                  # Конфигурация Alembic
 │
-├── alembic.ini         # Файл конфигурации Alembic
+├── app/        
+│   ├── api/
+│   │   ├── v1/
+│   │   │   ├── endpoints/
+│   │   │   │   ├── __init__.py # Инициализация модуля Python
+│   │   │   │   └── ... .py     # Роуты API (эндпоинты)
+│   │   │   ├── __init__.py     # Инициализация модуля Python
+│   │   │   └── router.py       # Объединяет маршруты версии v1
+│   │   └── __init__.py         # Инициализация модуля Python
+│   ├── core/           
+│   │   ├── __init__.py         # Инициализация модуля Python
+│   │   ├── config.py           # Конфигурация приложения
+│   │   └── security.py         # Логика авторизации (JWT, валидация)
+│   ├── db/
+│   │   ├── models/
+│   │   │   ├── __init__.py     # Инициализация модуля Python
+│   │   │   ├── base.py         # Базовый класс для моделей
+│   │   │   └── ... .py         # SQLAlchemy модели
+│   │   ├── __init__.py         # Инициализация модуля Python
+│   │   └── database.py         # Настройка подключения к БД
+│   ├── schemas/        
+│   │   ├── __init__.py         # Инициализация модуля Python
+│   │   └── ... .py             # Pydantic схемы
+│   ├── services/       
+│   │   ├── __init__.py         # Инициализация модуля Python
+│   │   └── ... .py             # CRUD операции (Бизнес логика)
+│   ├── test/
+│   │   ├── __init__.py         # Инициализация модуля Python
+│   │   └── load_test_data.py   # Скрипт загрузки тестовых данных (включает миграции)
+│   ├── __init__.py             # Инициализация модуля Python
+│   └── main.py                 # Точка входа FastAPI
 │
-├── app/
-│   ├── __init__.py     # Инициализация модуля Python
-│   ├── api.py          # Роуты API
-│   ├── crud.py         # CRUD операции
-│   ├── database.py     # Подключение к базе данных
-│   ├── main.py         # Точка входа FastAPI
-│   ├── models.py       # SQLAlchemy модели
-│   ├── schemas.py      # Pydantic схемы
-│
-├── docker-compose.yml  # Конфигурация Docker с PostgreSQL
-├── load_test_data.py   # Скрипт загрузки тестовых данных (включает миграции)
-├── requirements.txt    # Зависимости проекта
-├── test_data.csv       # Тестовые данные
-├── venv/               # Виртуальное окружение
+├── .dockerignore               # Исключения для сборки контейнера
+├── .env.sample                 # Пример файла с переменными окружения
+├── .gitignore                  # Исключаемые файлы
+├── alembic.ini                 # Файл конфигурации Alembic
+├── docker-compose-server.yml   # Конфигурация Docker с PostgreSQL для сервера
+├── docker-compose.yml          # Конфигурация Docker
+├── Dockerfile                  # Docker конфигурация
+├── README.md                   # Документация
+├── requirements.txt            # Зависимости проекта
+└── test_data.csv               # Тестовые данные
 ```
 
 ---
