@@ -137,7 +137,7 @@ docker push <your-dockerhub>
 2.  При пуше в `main` ветку произойдёт автоматическая сборка и публикация образа в DockerHub
     
 
-На прод-сервере можете использовать `docker-compose-server.yml` из [репозитория backend](https://github.com/dimi-try/energy-backend). Не забудьте создать свой `.env` для этого файла.
+На прод-сервере можете использовать `docker-compose-server.yml` из [репозитория backend](https://github.com/dimi-try/energy-backend). Скопируйте `.env.example`, переименуйте в `.env` и добавьте свои данные.
 
 #### 🔍 Автоматическая подготовка базы данных и миграций
 Если вам нужно поменять тестовые данные на сервере, то вы можете сделать следующее:
@@ -206,6 +206,17 @@ pip freeze > requirements.txt
 🗑 **Удаление всех зависимостей**
 ```bash
 pip uninstall -y -r requirements.txt
+```
+
+🧹 **Удаление виртуального окружения venv**
+```powershell
+Get-ChildItem -Path . -Recurse -Directory -Filter "venv" | Remove-Item -Recurse -Force #windows
+```
+
+🧹 **Удаление кеша pycache**
+```powershell
+Get-ChildItem -Recurse -Directory -Include "__pycache__", ".mypy_cache", ".pytest_cache" | Remove-Item -Recurse -Force #windows
+Get-ChildItem -Recurse -Include *.pyc | Remove-Item -Force #windows
 ```
 
 ---

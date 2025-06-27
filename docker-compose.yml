@@ -3,4 +3,4 @@ services:
   backend:
     build:
       context: .
-    image: ${DOCKER_USERNAME}/energy-charts-backend:latest
+    image: ${DOCKER_HUB_USER}/energy-charts-backend:latest
