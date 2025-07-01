@@ -1,5 +1,5 @@
 # Импортируем BaseModel из Pydantic для создания схем
-from pydantic import BaseModel
+from pydantic import BaseModel, condecimal
 # Импортируем Optional и List для аннотации
 from typing import Optional, List
 # Импортируем datetime для работы с датами
@@ -26,6 +26,8 @@ class ReviewsUser(ReviewBase):
     energy: Optional[str] = None
     # Поле brand: информация о бренде (через энергетика)
     brand: Optional[str] = None  # Добавляем название бренда
+    # Поле average_rating_review: средний рейтинг отзыва, значение оценки, от 0 до 10 с 4 знаками после запятой
+    average_rating_review: condecimal(ge=0, le=10, decimal_places=4)
     # Внутренний класс Config для настройки модели
     class Config:
         # Указываем, что модель может быть создана из атрибутов ORM-объектов SQLAlchemy
@@ -50,3 +52,7 @@ class Review(ReviewBase):
         # Указываем, что модель может быть создана из атрибутов ORM-объектов SQLAlchemy
         from_attributes = True
 
+# Модель для отзывов с рейтингами, используется для возврата данных об отзыве с рейтингами
+class ReviewWithRatings(Review):
+    # Поле average_rating_review: средний рейтинг отзыва, значение оценки, от 0 до 10 с 4 знаками после запятой
+    average_rating_review: condecimal(ge=0, le=10, decimal_places=4)

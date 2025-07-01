@@ -158,6 +158,9 @@ def get_user_reviews(db: Session, user_id: int, skip: int = 0, limit: int = 100)
         review_dict["energy"] = energy.name  # Добавляем только имя энергетика
         review_dict["brand"] = brand.name  # Добавляем только имя бренда
         review_dict["ratings"] = ratings
+        review_dict["average_rating_review"] = (
+            round(sum(rating.rating_value for rating in ratings) / len(ratings), 4) if ratings else 0.0
+        )
         result.append(review_dict)
     # Возвращаем результат
     return {"reviews": result}

@@ -1,5 +1,7 @@
 # Импортируем Session из SQLAlchemy для работы с базой данных
 from sqlalchemy.orm import Session
+# Импортируем функции SQLAlchemy для агрегации и сортировки
+from sqlalchemy import func, desc, distinct
 # Импортируем модели
 from app.db.models import Review, Rating
 # Импортируем схемы 
@@ -62,5 +64,21 @@ def get_reviews_by_energy(db: Session, energy_id: int, skip: int = 0, limit: int
     # Ограничиваем записи
     query = query.limit(limit)
     # Получаем все результаты
-    return query.all()
+    result = query.all()
+
+    # Проверяем, есть ли результаты
+    if not result:
+        return []  
+    # Добавляем средний рейтинг к каждому отзыву
+    for review in result:   
+        # Выполняем запрос к таблице Rating для получения среднего рейтинга
+        avg_rating = (
+            db.query(func.avg(Rating.rating_value))
+            .filter(Rating.review_id == review.id)
+            .scalar()
+        )
+        # Устанавливаем средний рейтинг в отзыв
+        review.average_rating_review = round(float(avg_rating), 4) if avg_rating else 0.0
+    # Возвращаем список отзывов с установленным средним рейтингом
+    return result
 

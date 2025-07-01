@@ -9,7 +9,7 @@ from app.services.energies import get_energies, get_energy
 from app.services.reviews import get_reviews_by_energy
 # Импортируем схемы для энергетиков
 from app.schemas.energy import Energy, EnergiesByBrand
-from app.schemas.review import Review
+from app.schemas.review import ReviewWithRatings
 # Импортируем зависимость для получения сессии базы данных
 from app.db.database import get_db
 
@@ -56,7 +56,7 @@ def read_energy(
     return db_energy
 
 # Определяем эндпоинт для получения списка отзывов на энергетик
-@router.get("/{energy_id}/reviews", response_model=List[Review])
+@router.get("/{energy_id}/reviews", response_model=List[ReviewWithRatings])
 def read_energy_reviews(
     # Параметр пути: ID энергетика
     energy_id: int,
