@@ -3,9 +3,9 @@ from pydantic import BaseModel, condecimal
 # Импортируем Optional для аннотации
 from typing import Optional
 # Импортируем базовую модель для энергетиков
-from app.schemas.brand import Brand
+from app.schemas.brands import Brand
 # Импортируем схемы для брендов и категорий
-from app.schemas.category import Category
+from app.schemas.categories import Category
 
 # =============== ТОПЫ ===============
 # Определяем раздел для моделей топов (энергетиков и брендов)

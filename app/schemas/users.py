@@ -5,10 +5,10 @@ from typing import Optional, List
 # Импортируем datetime для работы с датами
 from datetime import datetime
 # Импортируем схемы для брендов и энергетиков
-from app.schemas.brand import Brand
-from app.schemas.energy import Energy
+from app.schemas.brands import Brand
+from app.schemas.energies import Energy
 # Импортируем базовую модель для отзывов
-from app.schemas.review import ReviewsUser
+from app.schemas.reviews import ReviewsUser
 
 # =============== ПОЛЬЗОВАТЕЛИ ===============
 # Определяем раздел для моделей, связанных с пользователями

@@ -6,13 +6,13 @@ from sqlalchemy.orm import Session
 from typing import List
 # Импортируем функции CRUD для отзывов и пользователей
 from app.services.reviews import create_review_with_ratings, get_review
-from app.services.rating import get_ratings_by_review
+from app.services.ratings import get_ratings_by_review
 # Импортируем функции для получения пользователя и отзыва по пользователю и энергетикам
 from app.services.users import get_user, get_review_by_user_and_energy
 # Импортируем функцию для получения энергетика
 from app.services.energies import get_energy
 # Импортируем схемы для отзывов
-from app.schemas.review import Review, ReviewCreate
+from app.schemas.reviews import Review, ReviewCreate
 # Импортируем зависимость для получения сессии базы данных
 from app.db.database import get_db
 

@@ -8,8 +8,8 @@ from typing import List
 from app.services.energies import get_energies, get_energy
 from app.services.reviews import get_reviews_by_energy
 # Импортируем схемы для энергетиков
-from app.schemas.energy import Energy, EnergiesByBrand
-from app.schemas.review import ReviewWithRatings
+from app.schemas.energies import Energy, EnergiesByBrand
+from app.schemas.reviews import ReviewWithRatings
 # Импортируем зависимость для получения сессии базы данных
 from app.db.database import get_db
 

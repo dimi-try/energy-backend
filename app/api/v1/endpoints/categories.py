@@ -7,7 +7,7 @@ from typing import List
 # Импортируем функции CRUD для категорий
 from app.services.categories import get_categories, create_category
 # Импортируем схемы для категорий
-from app.schemas.category import Category, CategoryCreate
+from app.schemas.categories import Category, CategoryCreate
 # Импортируем зависимость для получения сессии базы данных
 from app.db.database import get_db
 

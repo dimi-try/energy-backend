@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 # Импортируем модели
 from app.db.models import Category
 # Импортируем схемы
-from app.schemas.category import CategoryCreate
+from app.schemas.categories import CategoryCreate
 
 # Определяем функцию для создания категории
 def create_category(db: Session, category: CategoryCreate):

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 # Импортируем функции CRUD для пользователей
 from app.services.users import get_user, create_user, get_user_profile, get_user_reviews
 # Импортируем схемы для пользователей
-from app.schemas.user import User, UserCreate, UserProfile, UserReviews
+from app.schemas.users import User, UserCreate, UserProfile, UserReviews
 # Импортируем зависимость для получения сессии базы данных
 from app.db.database import get_db
 

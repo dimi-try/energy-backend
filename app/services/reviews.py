@@ -5,7 +5,7 @@ from sqlalchemy import func, desc, distinct
 # Импортируем модели
 from app.db.models import Review, Rating
 # Импортируем схемы 
-from app.schemas.review import ReviewCreate
+from app.schemas.reviews import ReviewCreate
 
 # Определяем функцию для создания отзыва с оценками
 def create_review_with_ratings(db: Session, review: ReviewCreate):

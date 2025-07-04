@@ -5,7 +5,7 @@ from typing import Dict, Any
 # Импортируем модели
 from app.db.models import User, Review, Rating, Energy, Brand, Criteria
 # Импортируем схемы
-from app.schemas.user import User as UserSchema, UserCreate
+from app.schemas.users import User as UserSchema, UserCreate
 
 # Определяем функцию для получения пользователя по ID
 def get_user(db: Session, user_id: int):

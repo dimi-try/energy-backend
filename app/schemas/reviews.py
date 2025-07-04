@@ -5,7 +5,7 @@ from typing import Optional, List
 # Импортируем datetime для работы с датами
 from datetime import datetime
 # Импортируем базовую модель для отзывов
-from app.schemas.rating import Rating, RatingBase
+from app.schemas.ratings import Rating, RatingBase
 
 # Базовая модель для отзывов, содержит общие поля
 class ReviewBase(BaseModel):
@@ -34,7 +34,7 @@ class ReviewsUser(ReviewBase):
         from_attributes = True
         
 # Импортируем схемы для пользователей
-from app.schemas.user import UserBase
+from app.schemas.users import UserBase
 
 # Модель для создания отзыва, наследуется от ReviewBase
 class ReviewCreate(ReviewBase):
