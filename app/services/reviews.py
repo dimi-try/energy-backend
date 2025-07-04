@@ -55,14 +55,15 @@ def get_review(db: Session, review_id: int):
 
 # Определяем функцию для получения отзывов на энергетик
 def get_reviews_by_energy(db: Session, energy_id: int, skip: int = 0, limit: int = 100):
-    # Выполняем запрос к таблице Review
-    query = db.query(Review)
-    # Фильтруем по energy_id
-    query = query.filter(Review.energy_id == energy_id)
-    # Применяем смещение
-    query = query.offset(skip)
-    # Ограничиваем записи
-    query = query.limit(limit)
+    # Выполняем запрос к таблице Review с фильтрацией и сортировкой
+    query = (
+        db.query(Review) # Выполняем запрос к таблице Review
+        .filter(Review.energy_id == energy_id) # Фильтруем по energy_id
+        .order_by(Review.created_at.desc())  # сортировка по убыванию (сначала новые)
+        .offset(skip) # Применяем смещение
+        .limit(limit) # Ограничиваем записи
+    )
+
     # Получаем все результаты
     result = query.all()
 
