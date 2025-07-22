@@ -1,5 +1,5 @@
 # Импортируем BaseModel из Pydantic для создания схем
-from pydantic import BaseModel, EmailStr, Field, condecimal
+from pydantic import BaseModel, Field, condecimal
 # Импортируем Optional и List для аннотации
 from typing import Optional, List
 # Импортируем datetime для работы с датами
@@ -17,13 +17,10 @@ from app.schemas.reviews import ReviewsUser
 class UserBase(BaseModel):
     # Поле username: имя пользователя, обязательное, с максимальной длиной 100 символов
     username: str = Field(..., max_length=100)
-    # Поле email: email пользователя, обязательное, с максимальной длиной 255 символов
-    email: str = Field(..., max_length=255)
 
 # Модель для создания пользователя, наследуется от UserBase
 class UserCreate(UserBase):
-    # Поле password: пароль пользователя, обязательное, длина от 8 до 255 символов
-    password: str = Field(..., min_length=8, max_length=255)
+    pass
 
 # Полная модель пользователя, используется для возврата данных о пользователе
 class User(UserBase):

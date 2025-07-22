@@ -16,25 +16,12 @@ def get_user(db: Session, user_id: int):
     # Получаем первый результат
     return query.first()
 
-# Определяем функцию для получения пользователя по email
-def get_user_by_email(db: Session, email: str):
-    # Выполняем запрос к таблице User
-    query = db.query(User)
-    # Фильтруем по email
-    query = query.filter(User.email == email)
-    # Получаем первый результат
-    return query.first()
-
 # Определяем функцию для создания пользователя
 def create_user(db: Session, user: UserCreate):
     # Создаём новый объект User
     db_user = User(
         # Устанавливаем имя пользователя
-        username=user.username,
-        # Устанавливаем email
-        email=user.email,
-        # Устанавливаем пароль (без хеширования)
-        password=user.password  # В реальном приложении добавить хеширование!
+        username=user.username
     )
     # Добавляем объект в сессию
     db.add(db_user)

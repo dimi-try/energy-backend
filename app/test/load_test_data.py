@@ -75,8 +75,6 @@ def seed_data():
         users = [
             User(
                 username="test_user_1",
-                email="user1@example.com",
-                password="password1",
                 is_premium=False,
                 created_at=datetime.now()
             ),
@@ -84,16 +82,12 @@ def seed_data():
 
             User(
                 username="test_user_2",
-                email="user2@example.com",
-                password="password2",
                 is_premium=True,
                 created_at=datetime.now()
             ),
 
             User(
                 username="test_user_3",
-                email="user3@example.com",
-                password="password3",
                 is_premium=True,
                 created_at=datetime.now()
             )
