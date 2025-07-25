@@ -22,6 +22,11 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     pass
 
+# Модель для обновления пользователя
+class UserUpdate(BaseModel):
+    # Поле username: имя пользователя, необязательное, с максимальной длиной 100 символов
+    username: Optional[str] = Field(None, max_length=100)
+
 # Полная модель пользователя, используется для возврата данных о пользователе
 class User(UserBase):
     # Поле id: уникальный идентификатор пользователя

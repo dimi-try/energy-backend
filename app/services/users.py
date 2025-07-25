@@ -5,7 +5,7 @@ from typing import Dict, Any
 # Импортируем модели
 from app.db.models import User, Review, Rating, Energy, Brand, Criteria
 # Импортируем схемы
-from app.schemas.users import User as UserSchema, UserCreate
+from app.schemas.users import User as UserSchema, UserCreate, UserUpdate
 
 # Определяем функцию для получения пользователя по ID
 def get_user(db: Session, user_id: int):
@@ -30,6 +30,21 @@ def create_user(db: Session, user: UserCreate):
     # Обновляем объект
     db.refresh(db_user)
     # Возвращаем пользователя
+    return db_user
+
+# Определяем функцию для обновления пользователя
+def update_user(db: Session, user_id: int, user_update: UserUpdate):
+    # Получаем пользователя по ID
+    db_user = db.query(User).get(user_id)
+    if not db_user:
+        return None
+    # Обновляем username, если он предоставлен
+    if user_update.username:
+        db_user.username = user_update.username
+    # Фиксируем изменения
+    db.commit()
+    # Обновляем объект
+    db.refresh(db_user)
     return db_user
 
 # Определяем функцию для проверки отзыва пользователя
@@ -152,4 +167,3 @@ def get_user_reviews(db: Session, user_id: int, skip: int = 0, limit: int = 100)
         result.append(review_dict)
     # Возвращаем результат
     return {"reviews": result}
-
