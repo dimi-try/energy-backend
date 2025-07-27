@@ -5,7 +5,7 @@ from sqlalchemy import func, desc, distinct
 # Импортируем модели
 from app.db.models import Review, Rating
 # Импортируем схемы 
-from app.schemas.reviews import ReviewCreate
+from app.schemas.reviews import ReviewCreate, ReviewUpdate
 
 # Определяем функцию для создания отзыва с оценками
 def create_review_with_ratings(db: Session, review: ReviewCreate):
@@ -53,6 +53,54 @@ def get_review(db: Session, review_id: int):
     # Получаем первый результат
     return query.first()
 
+# Определяем функцию для обновления отзыва
+def update_review(db: Session, review_id: int, review_update: ReviewUpdate):
+    # Получаем отзыв по ID
+    db_review = db.query(Review).filter(Review.id == review_id).first()
+    if not db_review:
+        return None
+    # Обновляем текст отзыва, если предоставлен
+    if review_update.review_text is not None:
+        db_review.review_text = review_update.review_text
+    # Обновляем оценки, если предоставлены
+    if review_update.ratings:
+        # Удаляем существующие оценки
+        db.query(Rating).filter(Rating.review_id == review_id).delete()
+        # Добавляем новые оценки
+        for rating in review_update.ratings:
+            db_rating = Rating(
+                review_id=review_id,
+                criteria_id=rating.criteria_id,
+                rating_value=rating.rating_value
+            )
+            db.add(db_rating)
+    # Фиксируем изменения
+    db.commit()
+    # Обновляем объект
+    db.refresh(db_review)
+    # Вычисляем средний рейтинг
+    avg_rating = (
+        db.query(func.avg(Rating.rating_value))
+        .filter(Rating.review_id == db_review.id)
+        .scalar()
+    )
+    db_review.average_rating_review = round(float(avg_rating), 4) if avg_rating else 0.0
+    return db_review
+
+# Определяем функцию для удаления отзыва
+def delete_review(db: Session, review_id: int):
+    # Получаем отзыв по ID
+    db_review = db.query(Review).filter(Review.id == review_id).first()
+    if not db_review:
+        return False
+    # Удаляем связанные оценки
+    db.query(Rating).filter(Rating.review_id == review_id).delete()
+    # Удаляем отзыв
+    db.delete(db_review)
+    # Фиксируем изменения
+    db.commit()
+    return True
+
 # Определяем функцию для получения отзывов на энергетик
 def get_reviews_by_energy(db: Session, energy_id: int, skip: int = 0, limit: int = 100):
     # Выполняем запрос к таблице Review с фильтрацией и сортировкой
@@ -82,4 +130,3 @@ def get_reviews_by_energy(db: Session, energy_id: int, skip: int = 0, limit: int
         review.average_rating_review = round(float(avg_rating), 4) if avg_rating else 0.0
     # Возвращаем список отзывов с установленным средним рейтингом
     return result
-

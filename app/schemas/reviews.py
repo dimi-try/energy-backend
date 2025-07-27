@@ -24,7 +24,7 @@ class ReviewBase(BaseModel):
 class ReviewsUser(ReviewBase):
     # Поле energy: информация об энергетике
     energy: Optional[str] = None
-    # Поле brand: информация о бренде (через энергетика)
+    # Поле brand: информация о бренде (через энергетик)
     brand: Optional[str] = None  # Добавляем название бренда
     # Поле average_rating_review: средний рейтинг отзыва, значение оценки, от 0 до 10 с 4 знаками после запятой
     average_rating_review: condecimal(ge=0, le=10, decimal_places=4)
@@ -40,6 +40,13 @@ from app.schemas.users import UserBase
 class ReviewCreate(ReviewBase):
     # Поле ratings: список оценок по критериям, связанных с отзывом
     ratings: List[RatingBase]
+
+# Модель для обновления отзыва
+class ReviewUpdate(BaseModel):
+    # Поле review_text: текст отзыва, необязательное
+    review_text: Optional[str] = None
+    # Поле ratings: список оценок по критериям, необязательное
+    ratings: Optional[List[RatingBase]] = None
 
 # Полная модель отзыва, используется для возврата данных об отзыве
 class Review(ReviewBase):
