@@ -22,6 +22,8 @@ class ReviewBase(BaseModel):
 
 # Модель для отзывов пользователя, содержит информацию об энергетике и бренде
 class ReviewsUser(ReviewBase):
+    # Поле id: информация о id отзыва
+    id: int
     # Поле energy: информация об энергетике
     energy: Optional[str] = None
     # Поле brand: информация о бренде (через энергетик)
