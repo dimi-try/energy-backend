@@ -110,8 +110,8 @@ def seed_data():
         # 3.3 Критерии
         criteria = [
             Criteria(name="Вкус"),
-            Criteria(name="Цена"),
-            Criteria(name="Химоза")
+            Criteria(name="Стоимость"),
+            Criteria(name="Состав")
         ]
         db.add_all(criteria)
         db.commit()
