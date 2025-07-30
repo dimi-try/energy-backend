@@ -1,12 +1,14 @@
 # Импортируем BaseModel из Pydantic для создания схем
-from pydantic import BaseModel, EmailStr, Field, condecimal
+from pydantic import BaseModel, Field, condecimal
 # Импортируем Optional и List для аннотации
 from typing import Optional, List
 # Импортируем datetime для работы с датами
 from datetime import datetime
 # Импортируем схемы для брендов и энергетиков
-from app.schemas.brand import Brand
-from app.schemas.energy import Energy
+from app.schemas.brands import Brand
+from app.schemas.energies import Energy
+# Импортируем базовую модель для отзывов
+from app.schemas.reviews import ReviewsUser
 
 # =============== ПОЛЬЗОВАТЕЛИ ===============
 # Определяем раздел для моделей, связанных с пользователями
@@ -15,13 +17,15 @@ from app.schemas.energy import Energy
 class UserBase(BaseModel):
     # Поле username: имя пользователя, обязательное, с максимальной длиной 100 символов
     username: str = Field(..., max_length=100)
-    # Поле email: email пользователя, обязательное, с максимальной длиной 255 символов
-    email: str = Field(..., max_length=255)
 
 # Модель для создания пользователя, наследуется от UserBase
 class UserCreate(UserBase):
-    # Поле password: пароль пользователя, обязательное, длина от 8 до 255 символов
-    password: str = Field(..., min_length=8, max_length=255)
+    pass
+
+# Модель для обновления пользователя
+class UserUpdate(BaseModel):
+    # Поле username: имя пользователя, необязательное, с максимальной длиной 100 символов
+    username: Optional[str] = Field(None, max_length=100)
 
 # Полная модель пользователя, используется для возврата данных о пользователе
 class User(UserBase):
@@ -66,4 +70,20 @@ class UserProfile(BaseModel):
 Сноска для UserProfile:
 Эта модель используется в эндпоинте GET /users/{user_id}/profile, который возвращает
 профиль пользователя. Доступен только самому пользователю или администраторам.
+"""
+
+# =============== ОТЗЫВЫ ===============
+# Определяем раздел для модели отзывов пользователя
+class UserReviews(BaseModel):
+    # Поле reviews: список отзывов пользователя
+    reviews: List[ReviewsUser]  # ReviewsUser содержит информацию об отзыве
+    # Внутренний класс Config для настройки модели
+    class Config:
+        # Указываем, что модель может быть создана из атрибутов ORM-объектов SQLAlchemy
+        from_attributes = True
+
+"""
+Сноска для UserReviews:
+Эта модель используется в эндпоинте GET /users/{user_id}/reviews, который возвращает
+список отзывов пользователя. Доступен только самому пользователю или администраторам.
 """

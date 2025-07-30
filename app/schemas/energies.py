@@ -3,8 +3,8 @@ from pydantic import BaseModel, Field
 # Импортируем Optional и List для аннотации
 from typing import Optional, List
 # Импортируем схемы для брендов, категорий и отзывов
-from app.schemas.brand import Brand, BrandAndEnergies
-from app.schemas.category import Category
+from app.schemas.brands import Brand, BrandAndEnergies
+from app.schemas.categories import Category
 
 # =============== ЭНЕРГЕТИКИ ===============
 # Определяем раздел для моделей, связанных с энергетиками

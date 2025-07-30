@@ -16,10 +16,6 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     # Определяем поле username как уникальное строковое
     username = Column(String(100), unique=True, nullable=False)
-    # Определяем поле email как уникальное строковое
-    email = Column(String(255), unique=True, nullable=False)
-    # Определяем поле password как строковое
-    password = Column(String(255), nullable=False)
     # Определяем поле is_premium как булево
     is_premium = Column(Boolean, default=False)
     # Определяем поле created_at с текущей датой по умолчанию

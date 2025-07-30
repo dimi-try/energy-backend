@@ -5,7 +5,7 @@ from typing import Dict, Any
 # Импортируем модели
 from app.db.models import User, Review, Rating, Energy, Brand, Criteria
 # Импортируем схемы
-from app.schemas.user import User as UserSchema, UserCreate
+from app.schemas.users import User as UserSchema, UserCreate, UserUpdate
 
 # Определяем функцию для получения пользователя по ID
 def get_user(db: Session, user_id: int):
@@ -16,25 +16,12 @@ def get_user(db: Session, user_id: int):
     # Получаем первый результат
     return query.first()
 
-# Определяем функцию для получения пользователя по email
-def get_user_by_email(db: Session, email: str):
-    # Выполняем запрос к таблице User
-    query = db.query(User)
-    # Фильтруем по email
-    query = query.filter(User.email == email)
-    # Получаем первый результат
-    return query.first()
-
 # Определяем функцию для создания пользователя
 def create_user(db: Session, user: UserCreate):
     # Создаём новый объект User
     db_user = User(
         # Устанавливаем имя пользователя
-        username=user.username,
-        # Устанавливаем email
-        email=user.email,
-        # Устанавливаем пароль (без хеширования)
-        password=user.password  # В реальном приложении добавить хеширование!
+        username=user.username
     )
     # Добавляем объект в сессию
     db.add(db_user)
@@ -43,6 +30,21 @@ def create_user(db: Session, user: UserCreate):
     # Обновляем объект
     db.refresh(db_user)
     # Возвращаем пользователя
+    return db_user
+
+# Определяем функцию для обновления пользователя
+def update_user(db: Session, user_id: int, user_update: UserUpdate):
+    # Получаем пользователя по ID
+    db_user = db.query(User).get(user_id)
+    if not db_user:
+        return None
+    # Обновляем username, если он предоставлен
+    if user_update.username:
+        db_user.username = user_update.username
+    # Фиксируем изменения
+    db.commit()
+    # Обновляем объект
+    db.refresh(db_user)
     return db_user
 
 # Определяем функцию для проверки отзыва пользователя
@@ -127,3 +129,41 @@ def get_user_profile(db: Session, user_id: int) -> Dict[str, Any]:
         "favorite_brand": favorite_brand,
         "favorite_energy": favorite_energy
     }
+
+# Определяем функцию для получения отзывов пользователя
+def get_user_reviews(db: Session, user_id: int, skip: int = 0, limit: int = 100):
+    # Проверяем существование пользователя
+    user = db.query(User).get(user_id)
+    if not user:
+        return None
+    # Выполняем запрос с присоединением таблиц
+    reviews = (
+        db.query(Review)
+        .filter(Review.user_id == user_id)
+        .join(Energy, Review.energy_id == Energy.id)
+        .join(Brand, Energy.brand_id == Brand.id)
+        .order_by(Review.created_at.desc())  # сортировка по убыванию (сначала новые)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    # Формируем результат
+    result = []
+    for review in reviews:
+        # Получаем энергетик
+        energy = db.query(Energy).get(review.energy_id)
+        # Получаем бренд
+        brand = db.query(Brand).get(energy.brand_id)
+        # Получаем оценки
+        ratings = db.query(Rating).filter(Rating.review_id == review.id).all()
+        # Добавляем данные в результат
+        review_dict = review.__dict__
+        review_dict["energy"] = energy.name  # Добавляем только имя энергетика
+        review_dict["brand"] = brand.name  # Добавляем только имя бренда
+        review_dict["ratings"] = ratings
+        review_dict["average_rating_review"] = (
+            round(sum(rating.rating_value for rating in ratings) / len(ratings), 4) if ratings else 0.0
+        )
+        result.append(review_dict)
+    # Возвращаем результат
+    return {"reviews": result}

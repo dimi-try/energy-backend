@@ -8,8 +8,8 @@ from typing import List
 from app.services.brands import get_brand, get_brands
 from app.services.energies import get_energies_by_brand
 # Импортируем схемы для брендов
-from app.schemas.brand import Brand
-from app.schemas.energy import EnergiesByBrand
+from app.schemas.brands import Brand
+from app.schemas.energies import EnergiesByBrand
 # Импортируем зависимость для получения сессии базы данных
 from app.db.database import get_db
 

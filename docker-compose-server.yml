@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  backend:
+    image: ${DOCKER_HUB_USER}/energy-charts-backend:latest
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+    ports:
+      - "${BACKEND_HOST_PORT}:8000"
+    depends_on:
+      - postgres
+    networks:
+      - network
+
+  frontend:
+    image: ${DOCKER_HUB_USER}/energy-charts-frontend:latest
+    ports:
+      - "${FRONTEND_HOST_PORT}:80"
+    depends_on:
+      - backend
+    networks:
+      - network
+
+  bot:
+    image: ${DOCKER_HUB_USER}/energy-charts-bot:latest
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      FRONTEND_URL: ${FRONTEND_URL}
+      BOT_WEBHOOK_BASE_URL: ${BOT_WEBHOOK_BASE_URL}
+      BOT_PORT: ${BOT_PORT}
+      BOT_USERNAME: ${BOT_USERNAME}
+      NODE_ENV: ${NODE_ENV}
+    ports:
+      - "${BOT_HOST_PORT}:2000"
+    depends_on:
+      - backend
+    networks:
+      - network
+
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_HOST_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - network
+
+volumes:
+  postgres_data:
+
+networks:
+  network:
+    driver: bridge

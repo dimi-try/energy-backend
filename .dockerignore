@@ -2,6 +2,11 @@ __pycache__
 *.pyc
 *.pyo
 *.pyd
+venv
+build
+.github
 .env
+.env.sample
 .git
 .gitignore
+

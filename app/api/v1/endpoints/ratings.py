@@ -5,9 +5,9 @@ from sqlalchemy.orm import Session
 # Импортируем List из typing для аннотации списков
 from typing import List
 # Импортируем функции CRUD для оценок
-from app.services.rating import get_rating, get_ratings_by_review
+from app.services.ratings import get_rating, get_ratings_by_review
 # Импортируем схемы для оценок
-from app.schemas.rating import Rating
+from app.schemas.ratings import Rating
 # Импортируем зависимость для получения сессии базы данных
 from app.db.database import get_db
 

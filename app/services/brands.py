@@ -5,7 +5,7 @@ from sqlalchemy import func, distinct
 # Импортируем модели
 from app.db.models import Brand, Energy, Review, Rating
 # Импортируем схемы
-from app.schemas.brand import Brand as BrandSchema
+from app.schemas.brands import Brand as BrandSchema
 
 # Определяем функцию для получения данных о бренде по ID
 def get_brand(db: Session, brand_id: int):

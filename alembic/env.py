@@ -3,7 +3,7 @@ from logging.config import fileConfig
 from sqlalchemy import create_engine, pool
 from alembic import context
 from dotenv import load_dotenv
-from app.config import DATABASE_URL
+from app.core.config import DATABASE_URL
 
 # Подключаем конфигурацию Alembic
 config = context.config
@@ -11,8 +11,8 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Импортируем базу и модели
-from app.database import Base  # Импортируем Base из своего проекта
-from app.models import *  # Импортируем ВСЕ модели, чтобы Alembic их увидел
+from app.db.models.base import Base  # Импортируем Base из своего проекта
+from app.db.models import *  # Импортируем ВСЕ модели, чтобы Alembic их увидел
 
 target_metadata = Base.metadata # Alembic будет использовать метаданные моделей
 

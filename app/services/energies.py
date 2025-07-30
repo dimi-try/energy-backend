@@ -5,7 +5,7 @@ from sqlalchemy import func, desc, distinct
 # Импортируем модели
 from app.db.models import Energy, Review, Rating, Brand, Category
 # Импортируем схемы
-from app.schemas.energy import Energy as EnergySchema, EnergiesByBrand
+from app.schemas.energies import Energy as EnergySchema, EnergiesByBrand
 
 # Определяем функцию для получения данных об энергетике
 def get_energy(db: Session, energy_id: int):
