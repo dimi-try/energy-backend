@@ -154,7 +154,7 @@ mkdir -p /app/alembic/versions
 
 Запустить скрипт загрузки тестовых данных
 ```
-python load_test_data.py
+python -m app.test.load_test_data
 ```
 
 ---
