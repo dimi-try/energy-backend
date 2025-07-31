@@ -41,14 +41,10 @@ async def verify_telegram_user(
         user_create = UserCreate(
             username=user_data.get("username", f"user_{telegram_id}")
         )
-        db_user = create_user(db, user_create)
-        # Устанавливаем telegram_id как id пользователя
-        db_user.id = telegram_id
-        db.commit()
-        db.refresh(db_user)
+        db_user = create_user(db, user=user_create, telegram_id=telegram_id)
 
-    # Создаем JWT-токен
-    access_token = create_access_token({"sub": str(telegram_id)})
+    # Создаем JWT-токен с ролью
+    access_token = create_access_token({"sub": str(telegram_id)}, db=db)
 
     return {
         "success": True,

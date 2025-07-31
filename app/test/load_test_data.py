@@ -71,6 +71,14 @@ def seed_data():
     db = SessionLocal()
     
     try:
+        # 3.0 Роли
+        roles = [
+            Role(name="admin"),
+            Role(name="user")
+        ]
+        db.add_all(roles)
+        db.commit()
+
         # 3.1 Пользователи
         users = [
             User(

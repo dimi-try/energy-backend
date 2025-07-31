@@ -3,13 +3,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 # Импортируем Session из SQLAlchemy для работы с базой данных
 from sqlalchemy.orm import Session
 # Импортируем функции CRUD для пользователей
-from app.services.users import get_user, create_user, get_user_profile, get_user_reviews, update_user
+from app.services.users import get_user, create_user, get_user_profile, get_user_reviews, update_user, get_user_role
 # Импортируем схемы для пользователей
 from app.schemas.users import User, UserCreate, UserProfile, UserReviews, UserUpdate
 # Импортируем зависимость для получения сессии базы данных
 from app.db.database import get_db
 # Импортируем функции безопасности
-from app.core.security import verify_token
+from app.core.security import verify_token, verify_admin_token
 # Импортируем OAuth2PasswordBearer для работы с JWT
 from fastapi.security import OAuth2PasswordBearer
 
@@ -132,3 +132,15 @@ def get_user_reviews_endpoint(
         raise HTTPException(status_code=404, detail="Reviews not found")
     # Возвращаем отзывы пользователя
     return reviews
+
+# Новый эндпоинт для получения роли текущего пользователя
+@router.get("/me/role", response_model=dict)
+def get_user_role_endpoint(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Эндпоинт для получения роли текущего пользователя.
+    """
+    role = get_user_role(db, user_id=current_user["user_id"])
+    return {"role": role}

@@ -3,9 +3,17 @@ from sqlalchemy.orm import Session
 # Импортируем Dict и Any из typing для аннотации
 from typing import Dict, Any
 # Импортируем модели
-from app.db.models import User, Review, Rating, Energy, Brand, Criteria
+from app.db.models import User, Review, Rating, Energy, Brand, Criteria, Role, UserRole
 # Импортируем схемы
 from app.schemas.users import User as UserSchema, UserCreate, UserUpdate
+# Импортируем os для доступа к переменным окружения
+import os
+# Импортируем для обработки ошибок
+from sqlalchemy.exc import DataError
+from fastapi import HTTPException
+
+# Получаем список admin ID из переменной окружения
+TG_ADMIN_IDS = os.getenv("TG_ADMIN_IDS", "").split(",")
 
 # Определяем функцию для получения пользователя по ID
 def get_user(db: Session, user_id: int):
@@ -17,20 +25,31 @@ def get_user(db: Session, user_id: int):
     return query.first()
 
 # Определяем функцию для создания пользователя
-def create_user(db: Session, user: UserCreate):
-    # Создаём новый объект User
-    db_user = User(
-        # Устанавливаем имя пользователя
-        username=user.username
-    )
-    # Добавляем объект в сессию
-    db.add(db_user)
-    # Фиксируем изменения
-    db.commit()
-    # Обновляем объект
-    db.refresh(db_user)
-    # Возвращаем пользователя
-    return db_user
+def create_user(db: Session, user: UserCreate, telegram_id: int):
+    try:
+        # Создаём новый объект User
+        db_user = User(
+            id=telegram_id,  # Устанавливаем telegram_id как id
+            username=user.username
+        )
+        # Добавляем объект в сессию
+        db.add(db_user)
+        # Назначаем роль
+        role_name = "admin" if str(telegram_id) in TG_ADMIN_IDS else "user"
+        role = db.query(Role).filter(Role.name == role_name).first()
+        if not role:
+            raise ValueError(f"Role {role_name} not found in database")
+        user_role = UserRole(user_id=telegram_id, role_id=role.id)
+        db.add(user_role)
+        # Фиксируем изменения
+        db.commit()
+        # Обновляем объект
+        db.refresh(db_user)
+        # Возвращаем пользователя
+        return db_user
+    except DataError as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Invalid telegram_id: {str(e)}")
 
 # Определяем функцию для обновления пользователя
 def update_user(db: Session, user_id: int, user_update: UserUpdate):
@@ -167,3 +186,11 @@ def get_user_reviews(db: Session, user_id: int, skip: int = 0, limit: int = 100)
         result.append(review_dict)
     # Возвращаем результат
     return {"reviews": result}
+
+# Новая функция для получения роли пользователя
+def get_user_role(db: Session, user_id: int) -> str:
+    user_role = db.query(UserRole).filter(UserRole.user_id == user_id).first()
+    if not user_role:
+        return "user"  # По умолчанию роль user, если не найдена
+    role = db.query(Role).filter(Role.id == user_role.role_id).first()
+    return role.name if role else "user"
