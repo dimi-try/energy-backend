@@ -1,5 +1,5 @@
 # Импортируем Column, Integer, ForeignKey из SQLAlchemy
-from sqlalchemy import Column, Integer, ForeignKey
+from sqlalchemy import Column, Integer, BigInteger, ForeignKey
 # Импортируем relationship для определения связей
 from sqlalchemy.orm import relationship
 # Импортируем базовый класс
@@ -11,7 +11,7 @@ class UserRole(Base):
     __tablename__ = "user_roles"
 
     # Определяем поле user_id как первичный ключ и внешний ключ
-    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    user_id = Column(BigInteger, ForeignKey("users.id"), primary_key=True)
     # Определяем поле role_id как первичный ключ и внешний ключ
     role_id = Column(Integer, ForeignKey("roles.id"), primary_key=True)
 

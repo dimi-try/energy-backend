@@ -1,5 +1,5 @@
 # Импортируем Column, Integer, ForeignKey, Text, TIMESTAMP из SQLAlchemy
-from sqlalchemy import Column, Integer, ForeignKey, Text, TIMESTAMP
+from sqlalchemy import Column, Integer, ForeignKey, Text, TIMESTAMP, BigInteger
 # Импортируем relationship для определения связей
 from sqlalchemy.orm import relationship
 # Импортируем datetime для установки значений по умолчанию
@@ -15,7 +15,7 @@ class Review(Base):
     # Определяем поле id как первичный ключ
     id = Column(Integer, primary_key=True, index=True)
     # Определяем поле user_id как внешний ключ
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(BigInteger, ForeignKey("users.id"), nullable=False)
     # Определяем поле energy_id как внешний ключ
     energy_id = Column(Integer, ForeignKey("energetics.id"), nullable=False)
     # Определяем поле review_text как текстовое
