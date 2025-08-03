@@ -30,4 +30,4 @@ class Energy(Base):
     # Определяем связь с категорией
     category = relationship("Category", back_populates="energies")
     # Определяем связь один-ко-многим с отзывами
-    reviews = relationship("Review", back_populates="energy")
+    reviews = relationship("Review", back_populates="energy", cascade="all, delete-orphan")

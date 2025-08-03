@@ -22,6 +22,6 @@ class User(Base):
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
 
     # Определяем связь один-ко-многим с отзывами
-    reviews = relationship("Review", back_populates="user")
+    reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")
     # Определяем связь многие-ко-многим с ролями
-    roles = relationship("UserRole", back_populates="user")
+    roles = relationship("UserRole", back_populates="user", cascade="all, delete-orphan")

@@ -28,4 +28,4 @@ class Review(Base):
     # Определяем связь с энергетиком
     energy = relationship("Energy", back_populates="reviews")
     # Определяем связь один-ко-многим с оценками
-    ratings = relationship("Rating", back_populates="review")
+    ratings = relationship("Rating", back_populates="review", cascade="all, delete-orphan")

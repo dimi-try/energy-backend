@@ -16,4 +16,4 @@ class Brand(Base):
     name = Column(String(255), unique=True, nullable=False)
 
     # Связь: один бренд -> много энергетиков
-    energies = relationship("Energy", back_populates="brand")
+    energies = relationship("Energy", back_populates="brand", cascade="all, delete-orphan")
