@@ -5,7 +5,7 @@ from sqlalchemy import func, distinct
 # Импортируем модели
 from app.db.models import Brand, Energy, Review, Rating
 # Импортируем схемы
-from app.schemas.brands import Brand as BrandSchema
+from app.schemas.brands import Brand as BrandSchema, BrandCreate, BrandUpdate
 
 # Определяем функцию для получения данных о бренде по ID
 def get_brand(db: Session, brand_id: int):
@@ -102,3 +102,49 @@ def get_brands(db: Session, skip: int = 0, limit: int = 100):
     query = query.limit(limit)
     # Получаем все результаты
     return query.all()
+
+# Создание нового бренда
+def create_brand(db: Session, brand: BrandCreate):
+    """
+    Создает новый бренд в базе данных.
+    :param db: Сессия базы данных
+    :param brand: Данные для создания бренда
+    :return: Созданный бренд
+    """
+    db_brand = Brand(name=brand.name)
+    db.add(db_brand)
+    db.commit()
+    db.refresh(db_brand)
+    return db_brand
+
+# Обновление бренда
+def update_brand(db: Session, brand_id: int, brand_update: BrandUpdate):
+    """
+    Обновляет данные бренда по его ID.
+    :param db: Сессия базы данных
+    :param brand_id: ID бренда
+    :param brand_update: Данные для обновления
+    :return: Обновленный бренд или None, если бренд не найден
+    """
+    db_brand = db.query(Brand).filter(Brand.id == brand_id).first()
+    if not db_brand:
+        return None
+    db_brand.name = brand_update.name
+    db.commit()
+    db.refresh(db_brand)
+    return db_brand
+
+# Удаление бренда
+def delete_brand(db: Session, brand_id: int):
+    """
+    Удаляет бренд по его ID.
+    :param db: Сессия базы данных
+    :param brand_id: ID бренда
+    :return: True, если удаление успешно, False, если бренд не найден
+    """
+    db_brand = db.query(Brand).filter(Brand.id == brand_id).first()
+    if not db_brand:
+        return False
+    db.delete(db_brand)
+    db.commit()
+    return True
