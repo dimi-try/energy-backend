@@ -4,6 +4,8 @@ from pydantic import BaseModel, condecimal
 from typing import Optional, List
 # Импортируем datetime для работы с датами
 from datetime import datetime
+# Импортируем UserBase из base.py
+from app.schemas.base import UserBase
 # Импортируем базовую модель для отзывов
 from app.schemas.ratings import Rating, RatingBase
 
@@ -34,9 +36,6 @@ class ReviewsUser(ReviewBase):
     class Config:
         # Указываем, что модель может быть создана из атрибутов ORM-объектов SQLAlchemy
         from_attributes = True
-        
-# Импортируем схемы для пользователей
-from app.schemas.users import UserBase
 
 # Модель для создания отзыва, наследуется от ReviewBase
 class ReviewCreate(ReviewBase):

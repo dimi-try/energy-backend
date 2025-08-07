@@ -15,9 +15,9 @@ class Energy(Base):
     # Определяем поле name как строковое
     name = Column(String(255), nullable=False)
     # Определяем поле brand_id как внешний ключ
-    brand_id = Column(Integer, ForeignKey("brands.id"), nullable=False)
-    # Определяем поле category_id как внешний ключ (может быть пустым)
-    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
+    brand_id = Column(Integer, ForeignKey("brands.id"))
+    # Определяем поле category_id как внешний ключ
+    category_id = Column(Integer, ForeignKey("categories.id"))
     # Определяем поле description как текстовое
     description = Column(Text, nullable=True)
     # Определяем поле ingredients как текстовое

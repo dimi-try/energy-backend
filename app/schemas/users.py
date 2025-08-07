@@ -7,16 +7,14 @@ from datetime import datetime
 # Импортируем схемы для брендов и энергетиков
 from app.schemas.brands import Brand
 from app.schemas.energies import Energy
+# Импортируем UserBase из base.py
+from app.schemas.base import UserBase
 # Импортируем базовую модель для отзывов
 from app.schemas.reviews import ReviewsUser
 
 # =============== ПОЛЬЗОВАТЕЛИ ===============
 # Определяем раздел для моделей, связанных с пользователями
 
-# Базовая модель для пользователей, содержит общие поля
-class UserBase(BaseModel):
-    # Поле username: имя пользователя, обязательное, с максимальной длиной 100 символов
-    username: str = Field(..., max_length=100)
 
 # Модель для создания пользователя, наследуется от UserBase
 class UserCreate(UserBase):
