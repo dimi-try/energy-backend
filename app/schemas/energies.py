@@ -33,6 +33,13 @@ class EnergyCreate(EnergyBase):
     # Наследуем все поля из EnergyBase без изменений, используется для POST-запросов
     pass
 
+# Модель для обновления энергетика
+class EnergyUpdate(EnergyBase):
+    # Все поля необязательные для обновления
+    name: Optional[str] = None
+    brand_id: Optional[int] = None
+    category_id: Optional[int] = None
+
 # Полная модель энергетика, используется для возврата данных об энергетике
 class Energy(EnergyBase):
     # Поле id: уникальный идентификатор энергетика

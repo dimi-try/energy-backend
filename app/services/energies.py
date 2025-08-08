@@ -5,7 +5,7 @@ from sqlalchemy import func, desc, distinct
 # Импортируем модели
 from app.db.models import Energy, Review, Rating, Brand, Category
 # Импортируем схемы
-from app.schemas.energies import Energy as EnergySchema, EnergiesByBrand
+from app.schemas.energies import Energy as EnergySchema, EnergiesByBrand, EnergyCreate, EnergyUpdate
 
 # Определяем функцию для получения данных об энергетике
 def get_energy(db: Session, energy_id: int):
@@ -111,3 +111,48 @@ def get_energies_by_brand(db: Session, brand_id: int, skip: int = 0, limit: int 
         # Проходим по результатам
         for energy, average_rating, review_count in results
     ]
+
+# Создание нового энергетика
+def create_energy(db: Session, energy: EnergyCreate):
+    """
+    Создает новый энергетик в базе данных.
+    """
+    db_energy = Energy(
+        name=energy.name,
+        brand_id=energy.brand_id,
+        category_id=energy.category_id,
+        description=energy.description,
+        ingredients=energy.ingredients,
+        image_url=energy.image_url
+    )
+    db.add(db_energy)
+    db.commit()
+    db.refresh(db_energy)
+    return db_energy
+
+# Обновление энергетика
+def update_energy(db: Session, energy_id: int, energy_update: EnergyUpdate):
+    """
+    Обновляет данные энергетика по его ID.
+    """
+    db_energy = db.query(Energy).filter(Energy.id == energy_id).first()
+    if not db_energy:
+        return None
+    update_data = energy_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_energy, key, value)
+    db.commit()
+    db.refresh(db_energy)
+    return db_energy
+
+# Удаление энергетика
+def delete_energy(db: Session, energy_id: int):
+    """
+    Удаляет энергетик по его ID.
+    """
+    db_energy = db.query(Energy).filter(Energy.id == energy_id).first()
+    if not db_energy:
+        return False
+    db.delete(db_energy)
+    db.commit()
+    return True
