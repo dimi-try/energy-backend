@@ -16,6 +16,11 @@ class CriteriaCreate(CriteriaBase):
     # Наследуем все поля из CriteriaBase без изменений, используется для POST-запросов
     pass
 
+# Модель для обновления критерия
+class CriteriaUpdate(CriteriaBase):
+    # Поле name: необязательное для обновления
+    name: Optional[str] = None
+
 # Полная модель критерия, используется для возврата данных о критерии
 class Criteria(CriteriaBase):
     # Поле id: уникальный идентификатор критерия

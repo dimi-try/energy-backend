@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 # Импортируем модели
 from app.db.models import Criteria
 # Импортируем схемы
-from app.schemas.criteria import CriteriaCreate
+from app.schemas.criteria import CriteriaCreate, CriteriaUpdate
 
 # Определяем функцию для создания критерия
 def create_criteria(db: Session, criteria: CriteriaCreate):
@@ -37,3 +37,20 @@ def get_all_criteria(db: Session, skip: int = 0, limit: int = 100):
     query = query.limit(limit)
     # Получаем все результаты
     return query.all()
+
+# Определяем функцию для обновления критерия
+def update_criteria(db: Session, criteria_id: int, criteria_update: CriteriaUpdate):
+    """
+    Обновляет данные критерия по его ID.
+    """
+    db_criteria = db.query(Criteria).filter(Criteria.id == criteria_id).first()
+    if not db_criteria:
+        return None
+    if criteria_update.name:  # Проверяем, указано ли новое имя
+        existing_criteria = get_criteria_by_name(db, criteria_update.name)
+        if existing_criteria and existing_criteria.id != criteria_id:
+            raise ValueError("Критерий с таким именем уже существует")
+        db_criteria.name = criteria_update.name
+    db.commit()
+    db.refresh(db_criteria)
+    return db_criteria
