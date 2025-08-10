@@ -16,6 +16,11 @@ class CategoryCreate(CategoryBase):
     # Наследуем все поля из CategoryBase без изменений, используется для POST-запросов
     pass
 
+# Модель для обновления категории
+class CategoryUpdate(CategoryBase):
+    # Поле name: необязательное для обновления
+    name: Optional[str] = None
+
 # Полная модель категории, используется для возврата данных о категории
 class Category(CategoryBase):
     # Поле id: уникальный идентификатор категории
