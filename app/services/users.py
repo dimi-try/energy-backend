@@ -24,6 +24,31 @@ def get_user(db: Session, user_id: int):
     # Получаем первый результат
     return query.first()
 
+# Определяем функцию для получения всех пользователей
+def get_all_users(db: Session, skip: int = 0, limit: int = 100):
+    """
+    Получает список всех пользователей с пагинацией.
+    """
+    query = db.query(User)
+    query = query.offset(skip)
+    query = query.limit(limit)
+    return query.all()
+
+# Определяем функцию для удаления пользователя
+def delete_user(db: Session, user_id: int):
+    """
+    Удаляет пользователя по его ID.
+    """
+    db_user = db.query(User).filter(User.id == user_id).first()
+    if not db_user:
+        return False
+    # Удаляем связанные записи в таблице user_roles
+    db.query(UserRole).filter(UserRole.user_id == user_id).delete()
+    # Удаляем пользователя
+    db.delete(db_user)
+    db.commit()
+    return True
+
 # Определяем функцию для создания пользователя
 def create_user(db: Session, user: UserCreate, telegram_id: int):
     try:

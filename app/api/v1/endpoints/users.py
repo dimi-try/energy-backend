@@ -2,8 +2,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 # Импортируем Session из SQLAlchemy для работы с базой данных
 from sqlalchemy.orm import Session
+# Импортируем List из typing для аннотации списков
+from typing import List
 # Импортируем функции CRUD для пользователей
-from app.services.users import get_user, create_user, get_user_profile, get_user_reviews, update_user, get_user_role
+from app.services.users import get_user, create_user, get_user_profile, get_user_reviews, update_user, get_user_role, get_all_users, delete_user
 # Импортируем схемы для пользователей
 from app.schemas.users import User, UserCreate, UserProfile, UserReviews, UserUpdate
 # Импортируем зависимость для получения сессии базы данных
@@ -30,6 +32,21 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Invalid token: user_id not found")
     return {"user_id": int(user_id)}
 
+# Определяем эндпоинт для получения списка всех пользователей (только для админов)
+@router.get("/", response_model=List[User])
+def read_all_users(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """
+    Эндпоинт для получения списка всех пользователей с пагинацией.
+    Доступен только администраторам.
+    """
+    verify_admin_token(token, db)
+    return get_all_users(db, skip=skip, limit=limit)
+
 # Определяем эндпоинт для получения данных о пользователе
 @router.get("/{user_id}", response_model=User)
 def read_user(
@@ -55,6 +72,23 @@ def read_user(
         raise HTTPException(status_code=404, detail="User not found")
     # Возвращаем объект пользователя
     return db_user
+
+# Определяем эндпоинт для удаления пользователя (только для админов)
+@router.delete("/{user_id}", response_model=dict)
+def delete_user_endpoint(
+    user_id: int,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """
+    Эндпоинт для удаления пользователя по его ID.
+    Доступен только администраторам.
+    """
+    verify_admin_token(token, db)
+    success = delete_user(db, user_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"success": True, "message": "User deleted successfully"}
 
 # Определяем эндпоинт для получения профиля пользователя
 @router.get("/{user_id}/profile", response_model=UserProfile)
