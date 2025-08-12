@@ -5,18 +5,18 @@ from sqlalchemy.orm import Session
 # Импортируем List из typing для аннотации списков
 from typing import List
 # Импортируем функции CRUD для отзывов и пользователей
-from app.services.reviews import create_review_with_ratings, get_review, update_review, delete_review
+from app.services.reviews import create_review_with_ratings, get_review, update_review, delete_review, get_all_reviews
 from app.services.ratings import get_ratings_by_review
 # Импортируем функции для получения пользователя и отзыва по пользователю и энергетикам
 from app.services.users import get_user, get_review_by_user_and_energy
 # Импортируем функцию для получения энергетика
 from app.services.energies import get_energy
 # Импортируем схемы для отзывов
-from app.schemas.reviews import Review, ReviewCreate, ReviewUpdate
+from app.schemas.reviews import Review, ReviewCreate, ReviewUpdate, ReviewWithRatings
 # Импортируем зависимость для получения сессии базы данных
 from app.db.database import get_db
 # Импортируем функции безопасности
-from app.core.security import verify_token
+from app.core.security import verify_token, verify_admin_token
 # Импортируем OAuth2PasswordBearer для работы с JWT
 from fastapi.security import OAuth2PasswordBearer
 
@@ -36,6 +36,22 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token: user_id not found")
     return {"user_id": int(user_id)}
+
+# Определяем эндпоинт для получения списка всех отзывов (только для админов)
+@router.get("/", response_model=List[ReviewWithRatings])
+def read_all_reviews(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """
+    Эндпоинт для получения списка всех отзывов с пагинацией.
+    Доступен только администраторам.
+    """
+    verify_admin_token(token, db)
+    reviews = get_all_reviews(db, skip=skip, limit=limit)
+    return reviews
 
 # Определяем эндпоинт для создания отзыва
 @router.post("/", response_model=Review, status_code=status.HTTP_201_CREATED)
@@ -121,19 +137,20 @@ def delete_review_endpoint(
     # Зависимость: сессия базы данных
     db: Session = Depends(get_db),
     # Зависимость: текущий пользователь
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    token: str = Depends(oauth2_scheme)
 ):
     """
     Эндпоинт для удаления отзыва.
-    Доступен только владельцу отзыва.
+    Доступен владельцу отзыва или администраторам.
     """
     # Получаем отзыв
     db_review = get_review(db, review_id=review_id)
     if not db_review:
         raise HTTPException(status_code=404, detail="Review not found")
-    # Проверяем, что пользователь удаляет свой отзыв
+    # Проверяем, что пользователь удаляет свой отзыв или является админом
     if db_review.user_id != current_user["user_id"]:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this review")
+        verify_admin_token(token, db)
     # Удаляем отзыв
     success = delete_review(db, review_id=review_id)
     if not success:

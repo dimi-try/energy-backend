@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 # Импортируем функции SQLAlchemy для агрегации и сортировки
 from sqlalchemy import func, desc, distinct
 # Импортируем модели
-from app.db.models import Review, Rating
+from app.db.models import Review, Rating, Energy, Brand, User
 # Импортируем схемы 
 from app.schemas.reviews import ReviewCreate, ReviewUpdate
 
@@ -52,6 +52,29 @@ def get_review(db: Session, review_id: int):
     query = query.filter(Review.id == review_id)
     # Получаем первый результат
     return query.first()
+
+# Определяем функцию для получения всех отзывов
+def get_all_reviews(db: Session, skip: int = 0, limit: int = 100):
+    """
+    Получает список всех отзывов с пагинацией.
+    """
+    query = (
+        db.query(Review)
+        .join(Energy, Review.energy_id == Energy.id)
+        .join(User, Review.user_id == User.id)
+        .order_by(Review.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    result = query.all()
+    for review in result:
+        avg_rating = (
+            db.query(func.avg(Rating.rating_value))
+            .filter(Rating.review_id == review.id)
+            .scalar()
+        )
+        review.average_rating_review = round(float(avg_rating), 4) if avg_rating else 0.0
+    return result
 
 # Определяем функцию для обновления отзыва
 def update_review(db: Session, review_id: int, review_update: ReviewUpdate):
