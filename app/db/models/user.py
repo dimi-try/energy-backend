@@ -25,3 +25,10 @@ class User(Base):
     reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")
     # Определяем связь многие-ко-многим с ролями
     roles = relationship("UserRole", back_populates="user", cascade="all, delete-orphan")
+    # Определяем связь с черным списком, даже если пользователь еще не зарегистрирован
+    blacklist_entry = relationship(
+        "Blacklist",
+        back_populates="user",
+        primaryjoin="User.id==foreign(Blacklist.user_id)",
+        uselist=False
+    )

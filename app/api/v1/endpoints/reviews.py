@@ -11,6 +11,8 @@ from app.services.ratings import get_ratings_by_review
 from app.services.users import get_user, get_review_by_user_and_energy
 # Импортируем функцию для получения энергетика
 from app.services.energies import get_energy
+# Импортируем функцию для получения пользователей (даже не зареганных) из ЧС
+from app.services.blacklist import get_blacklist_entry
 # Импортируем схемы для отзывов
 from app.schemas.reviews import Review, ReviewCreate, ReviewUpdate, ReviewWithRatings
 # Импортируем зависимость для получения сессии базы данных
@@ -68,21 +70,29 @@ def create_review(
     Доступен только зарегистрированным пользователям.
     Проверяет существование энергетика и пользователя, а также наличие существующего отзыва.
     """
+    # Проверяем, находится ли пользователь в черном списке
+    blacklist_entry = get_blacklist_entry(db, user_id=current_user["user_id"])
+    if blacklist_entry:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Вы в черном списке по причине: {blacklist_entry.reason or 'Не указана'}"
+        )
+        
     # Проверяем, что пользователь создает отзыв от своего имени
     if current_user["user_id"] != review.user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to create review for another user")
+        raise HTTPException(status_code=403, detail="Пожалуйста, перезапустите бота и зайдите заново в приложение!")
     
     # Проверяем существование энергетика
     db_energy = get_energy(db, energy_id=review.energy_id)
     # Вызываем исключение, если энергетик не найден
     if not db_energy:
-        raise HTTPException(status_code=404, detail="Energy not found")
+        raise HTTPException(status_code=404, detail="Энергетик не найден!")
     
     # Проверяем существование пользователя
     db_user = get_user(db, user_id=review.user_id)
     # Вызываем исключение, если пользователь не найден
     if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Пользователь не найден!")
     
     # Проверяем, оставил ли пользователь уже отзыв на этот энергетик
     existing_review = get_review_by_user_and_energy(
@@ -94,7 +104,7 @@ def create_review(
     if existing_review:
         raise HTTPException(
             status_code=400,
-            detail="User already has a review for this energy drink"
+            detail="Вы уже оставили отзыв на этот энергетик! Вы можете отредактировать свой отзыв."
         )
 
     # Вызываем функцию для создания отзыва с оценками
@@ -119,14 +129,14 @@ def update_review_endpoint(
     # Получаем отзыв
     db_review = get_review(db, review_id=review_id)
     if not db_review:
-        raise HTTPException(status_code=404, detail="Review not found")
+        raise HTTPException(status_code=404, detail="Отзыв не найден")
     # Проверяем, что пользователь редактирует свой отзыв
     if db_review.user_id != current_user["user_id"]:
-        raise HTTPException(status_code=403, detail="Not authorized to edit this review")
+        raise HTTPException(status_code=403, detail="Пожалуйста, перезапустите бота и зайдите заново в приложение!")
     # Обновляем отзыв
     updated_review = update_review(db, review_id=review_id, review_update=review_update)
     if not updated_review:
-        raise HTTPException(status_code=404, detail="Review not found")
+        raise HTTPException(status_code=404, detail="Отзыв не найден")
     return updated_review
 
 # Определяем эндпоинт для удаления отзыва
@@ -147,12 +157,12 @@ def delete_review_endpoint(
     # Получаем отзыв
     db_review = get_review(db, review_id=review_id)
     if not db_review:
-        raise HTTPException(status_code=404, detail="Review not found")
+        raise HTTPException(status_code=404, detail="Отзыв не найден")
     # Проверяем, что пользователь удаляет свой отзыв или является админом
     if db_review.user_id != current_user["user_id"]:
         verify_admin_token(token, db)
     # Удаляем отзыв
     success = delete_review(db, review_id=review_id)
     if not success:
-        raise HTTPException(status_code=404, detail="Review not found")
+        raise HTTPException(status_code=404, detail="Отзыв не найден")
     return None

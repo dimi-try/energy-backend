@@ -18,6 +18,8 @@ from app.api.v1.endpoints import categories
 from app.api.v1.endpoints import top
 # Импортируем маршруты для авторизации
 from app.api.v1.endpoints import auth
+# Импортируем маршруты для черного списка
+from app.api.v1.endpoints import blacklist
 
 # Создаём маршрутизатор для версии v1
 api_router = APIRouter()
@@ -110,4 +112,14 @@ api_router.include_router(
     prefix="/auth",
     # Устанавливаем тег для документации
     tags=["auth"]
+)
+
+# Подключаем маршруты для авторизации с тегом "blacklist"
+api_router.include_router(
+    # Указываем маршрутизатор авторизации
+    blacklist.router,
+    # Устанавливаем префикс для маршрутов
+    prefix="/blacklist",
+    # Устанавливаем тег для документации
+    tags=["blacklist"]
 )

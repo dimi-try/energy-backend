@@ -9,3 +9,4 @@ from .user_role import UserRole
 from .criteria import Criteria
 from .review import Review
 from .rating import Rating
+from .blacklist import Blacklist
