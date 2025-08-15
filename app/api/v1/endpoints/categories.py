@@ -1,18 +1,15 @@
-# Импортируем APIRouter из FastAPI для создания маршрутов
 from fastapi import APIRouter, Depends, HTTPException, status
-# Импортируем Session из SQLAlchemy для работы с базой данных
 from sqlalchemy.orm import Session
-# Импортируем List из typing для аннотации списков
 from typing import List
-# Импортируем функции CRUD для категорий
-from app.services.categories import get_categories, create_category, update_category, get_category_by_name
-# Импортируем схемы для категорий
-from app.schemas.categories import Category, CategoryCreate, CategoryUpdate
-# Импортируем зависимость для получения сессии базы данных
-from app.db.database import get_db
-# Импортируем функции безопасности
-from app.core.security import verify_admin_token
 from fastapi.security import OAuth2PasswordBearer
+
+from app.core.auth import verify_admin_token
+
+from app.db.database import get_db
+
+from app.schemas.categories import Category, CategoryCreate, CategoryUpdate
+
+from app.services.categories import get_categories, get_categories_admin, create_category, update_category, get_category_by_name
 
 # Создаём маршрутизатор для эндпоинтов категорий
 router = APIRouter()
@@ -20,7 +17,7 @@ router = APIRouter()
 # Настройка OAuth2 для проверки JWT-токена
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/verify")
 
-# Определяем эндпоинт для получения списка всех категорий
+# =============== READ ALL ===============
 @router.get("/", response_model=List[Category])
 def read_categories(
     # Параметр запроса: смещение для пагинации
@@ -37,7 +34,9 @@ def read_categories(
     # Вызываем функцию для получения списка категорий
     return get_categories(db, skip=skip, limit=limit)
 
-# Создание новой категории (только для админов)
+# =============== ONLY ADMINS ===============
+
+# =============== CREATE ===============
 @router.post("/", response_model=Category, status_code=status.HTTP_201_CREATED)
 def create_new_category(
     category: CategoryCreate,
@@ -54,7 +53,20 @@ def create_new_category(
         raise HTTPException(status_code=400, detail="Category already exists")
     return create_category(db, category)
 
-# Обновление категории (только для админов)
+# =============== READ ALL WITHOUT PAGINATION ===============
+@router.get("/admin/", response_model=List[Category])
+def read_categories_admin(
+    # Зависимость: сессия базы данных
+    db: Session = Depends(get_db)
+):
+    """
+    Эндпоинт для получения списка всех категорий энергетиков без пагинации для админ-панели.
+    Доступен всем пользователям (гостям, зарегистрированным пользователям и администраторам).
+    """
+    # Вызываем функцию для получения списка категорий
+    return get_categories_admin(db)
+
+# =============== UPDATE ===============
 @router.put("/{category_id}", response_model=Category)
 def update_existing_category(
     category_id: int,

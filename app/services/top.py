@@ -1,13 +1,11 @@
-# Импортируем Session из SQLAlchemy для работы с базой данных
 from sqlalchemy.orm import Session
-# Импортируем функции SQLAlchemy для агрегации и сортировки
 from sqlalchemy import func, desc, distinct
-# Импортируем модели
+
 from app.db.models import Energy, Review, Rating, Brand
-# Импортируем схемы
+
 from app.schemas.top import EnergyTop, BrandTop
 
-# Определяем функцию для получения топа энергетиков
+# =============== READ ENERGY CHART ===============
 def get_top_energies(db: Session, limit: int = 100):
     # Создаём подзапрос для среднего рейтинга
     avg_rating_subquery = (
@@ -91,7 +89,7 @@ def get_top_energies(db: Session, limit: int = 100):
         "review_count": review_count
     } for energy, avg_rating, review_count in energies]
 
-# Определяем функцию для получения топа брендов
+# =============== READ BRAND CHART ===============
 def get_top_brands(db: Session, limit: int = 100):
     """
     Получает топ брендов с:

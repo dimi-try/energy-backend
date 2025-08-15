@@ -1,17 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
-from app.core.security import create_access_token, validate_telegram_init_data
-from app.services.users import get_user, create_user, get_user_role
-from app.db.models import Role, UserRole
-from app.schemas.users import UserCreate
-from app.db.database import get_db
 import json
 import logging
-import os
-from dotenv import load_dotenv
 
-# Загружаем переменные окружения из файла .env
-load_dotenv()
+from app.core.auth import get_user_role, create_access_token, validate_telegram_init_data
+from app.core.config import TG_ADMIN_IDS
+
+from app.db.database import get_db
+from app.db.models import Role, UserRole
+
+from app.schemas.users import UserCreate
+
+from app.services.users import get_user, create_user
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -60,7 +60,7 @@ async def verify_telegram_user(
         # Проверяем и обновляем роль для существующего пользователя
         logger.info(f"User with telegram_id={telegram_id} found, checking role")
         current_role = get_user_role(db, user_id=telegram_id)
-        expected_role = "admin" if str(telegram_id) in os.getenv("TG_ADMIN_IDS", "").split(",") else "user"
+        expected_role = "admin" if str(telegram_id) in TG_ADMIN_IDS else "user"
         if current_role != expected_role:
             logger.info(f"Updating role for telegram_id={telegram_id} to {expected_role}")
             # Удаляем старую роль, если она есть

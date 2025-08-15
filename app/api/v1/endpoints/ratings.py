@@ -1,20 +1,17 @@
-# Импортируем APIRouter из FastAPI для создания маршрутов
 from fastapi import APIRouter, Depends, HTTPException
-# Импортируем Session из SQLAlchemy для работы с базой данных
 from sqlalchemy.orm import Session
-# Импортируем List из typing для аннотации списков
 from typing import List
-# Импортируем функции CRUD для оценок
-from app.services.ratings import get_rating, get_ratings_by_review
-# Импортируем схемы для оценок
-from app.schemas.ratings import Rating
-# Импортируем зависимость для получения сессии базы данных
+
 from app.db.database import get_db
+
+from app.schemas.ratings import Rating
+
+from app.services.ratings import get_rating, get_ratings_by_review
 
 # Создаём маршрутизатор для эндпоинтов оценок
 router = APIRouter()
 
-# Закомментированный эндпоинт для получения данных об оценке (сохранён как есть)
+# Закомментированный эндпоинт для получения данных об оценке (пока что не нужен)
 # # Данные о конкретной оценке
 # @router.get("/ratings/{rating_id}", response_model=schemas.Rating)
 # def read_rating(rating_id: int, db: Session = Depends(get_db)):

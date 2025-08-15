@@ -1,8 +1,7 @@
-import os
 from logging.config import fileConfig
 from sqlalchemy import create_engine, pool
 from alembic import context
-from dotenv import load_dotenv
+
 from app.core.config import DATABASE_URL
 
 # Подключаем конфигурацию Alembic

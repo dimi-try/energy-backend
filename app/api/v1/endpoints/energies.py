@@ -1,24 +1,17 @@
-# Импортируем APIRouter из FastAPI для создания маршрутов
 from fastapi import APIRouter, Depends, HTTPException, status
-# Импортируем Session из SQLAlchemy для работы с базой данных
 from sqlalchemy.orm import Session
-# Импортируем List из typing для аннотации списков
 from typing import List
-# Импортируем функции CRUD для энергетиков
-from app.services.energies import get_energies, get_energy, create_energy, update_energy, delete_energy
-from app.services.reviews import get_reviews_by_energy
-from app.services.brands import get_brands
-from app.services.categories import get_categories
-# Импортируем схемы для энергетиков
-from app.schemas.energies import Energy, EnergiesByBrand, EnergyCreate, EnergyUpdate
-from app.schemas.reviews import ReviewWithRatings
-from app.schemas.brands import Brand
-from app.schemas.categories import Category
-# Импортируем зависимость для получения сессии базы данных
-from app.db.database import get_db
-# Импортируем функции безопасности
-from app.core.security import verify_admin_token
 from fastapi.security import OAuth2PasswordBearer
+
+from app.core.auth import verify_admin_token
+
+from app.db.database import get_db
+
+from app.schemas.energies import Energy, EnergyCreate, EnergyUpdate
+from app.schemas.reviews import ReviewWithRatings
+
+from app.services.energies import get_energies, get_energy, create_energy, update_energy, delete_energy, get_energies_admin
+from app.services.reviews import get_reviews_by_energy
 
 # Создаём маршрутизатор для эндпоинтов энергетиков
 router = APIRouter()
@@ -26,7 +19,7 @@ router = APIRouter()
 # Настройка OAuth2 для проверки JWT-токена
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/verify")
 
-# Определяем эндпоинт для получения списка всех энергетиков
+# =============== READ ALL ===============
 @router.get("/", response_model=List[Energy])
 def read_energies(
     # Параметр запроса: смещение для пагинации
@@ -43,33 +36,7 @@ def read_energies(
     # Вызываем функцию для получения списка энергетиков
     return get_energies(db, skip=skip, limit=limit)
 
-# Получение списка брендов для селектбокса
-@router.get("/brands-for-select", response_model=List[Brand])
-def read_brands_for_select(
-    db: Session = Depends(get_db),
-    token: str = Depends(oauth2_scheme)
-):
-    """
-    Эндпоинт для получения списка брендов для селектбокса в админ-панели.
-    Доступен только администраторам.
-    """
-    verify_admin_token(token, db)
-    return get_brands(db, skip=0, limit=1000)
-
-# Получение списка категорий для селектбокса
-@router.get("/categories-for-select", response_model=List[Category])
-def read_categories_for_select(
-    db: Session = Depends(get_db),
-    token: str = Depends(oauth2_scheme)
-):
-    """
-    Эндпоинт для получения списка категорий для селектбокса в админ-панели.
-    Доступен только администраторам.
-    """
-    verify_admin_token(token, db)
-    return get_categories(db, skip=0, limit=1000)
-
-# Определяем эндпоинт для получения данных о конкретном энергетике
+# =============== READ ONE ===============
 @router.get("/{energy_id}", response_model=Energy)
 def read_energy(
     # Параметр пути: ID энергетика
@@ -91,7 +58,7 @@ def read_energy(
     # Возвращаем объект энергетика
     return db_energy
 
-# Определяем эндпоинт для получения списка отзывов на энергетик
+# =============== READ ALL REVIEWS ONE ENERGY ===============
 @router.get("/{energy_id}/reviews", response_model=List[ReviewWithRatings])
 def read_energy_reviews(
     # Параметр пути: ID энергетика
@@ -110,7 +77,9 @@ def read_energy_reviews(
     # Вызываем функцию для получения списка отзывов
     return get_reviews_by_energy(db, energy_id=energy_id, skip=skip, limit=limit)
 
-# Создание нового энергетика (только для админов)
+# =============== ONLY ADMINS ===============
+
+# =============== CREATE ===============
 @router.post("/", response_model=Energy, status_code=status.HTTP_201_CREATED)
 def create_new_energy(
     energy: EnergyCreate,
@@ -125,7 +94,20 @@ def create_new_energy(
     db_energy = create_energy(db, energy)
     return db_energy
 
-# Обновление энергетика (только для админов)
+# =============== READ ALL WITHOUT PAGINATION ===============
+@router.get("/admin/", response_model=List[Energy])
+def read_energies_admin(
+    # Зависимость: сессия базы данных
+    db: Session = Depends(get_db)
+):
+    """
+    Эндпоинт для получения списка всех энергетиков без пагинации для админ-панели.
+    Доступен всем пользователям (гостям, зарегистрированным пользователям и администраторам).
+    """
+    # Вызываем функцию для получения списка энергетиков
+    return get_energies_admin(db)
+
+# =============== UPDATE ===============
 @router.put("/{energy_id}", response_model=Energy)
 def update_existing_energy(
     energy_id: int,
@@ -143,7 +125,7 @@ def update_existing_energy(
         raise HTTPException(status_code=404, detail="Energy not found")
     return db_energy
 
-# Удаление энергетика (только для админов)
+# =============== DELETE ===============
 @router.delete("/{energy_id}", response_model=dict)
 def delete_existing_energy(
     energy_id: int,

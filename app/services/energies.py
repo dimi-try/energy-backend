@@ -1,13 +1,22 @@
-# Импортируем Session из SQLAlchemy для работы с базой данных
 from sqlalchemy.orm import Session
-# Импортируем функции SQLAlchemy для агрегации и сортировки
 from sqlalchemy import func, desc, distinct
-# Импортируем модели
-from app.db.models import Energy, Review, Rating, Brand, Category
-# Импортируем схемы
-from app.schemas.energies import Energy as EnergySchema, EnergiesByBrand, EnergyCreate, EnergyUpdate
 
-# Определяем функцию для получения данных об энергетике
+from app.db.models import Energy, Review, Rating, Brand, Category
+
+from app.schemas.energies import EnergyCreate, EnergyUpdate
+
+# =============== READ ALL ===============
+def get_energies(db: Session, skip: int = 0, limit: int = 100):
+    # Выполняем запрос к таблице Energy
+    query = db.query(Energy)
+    # Применяем смещение для пагинации
+    query = query.offset(skip)
+    # Ограничиваем количество записей
+    query = query.limit(limit)
+    # Получаем все результаты
+    return query.all()
+
+# =============== READ ONE ===============
 def get_energy(db: Session, energy_id: int):
     # Выполняем запрос для получения энергетика
     result = (
@@ -44,18 +53,7 @@ def get_energy(db: Session, energy_id: int):
     # Возвращаем None, если энергетик не найден
     return None
 
-# Определяем функцию для получения списка энергетиков
-def get_energies(db: Session, skip: int = 0, limit: int = 100):
-    # Выполняем запрос к таблице Energy
-    query = db.query(Energy)
-    # Применяем смещение для пагинации
-    query = query.offset(skip)
-    # Ограничиваем количество записей
-    query = query.limit(limit)
-    # Получаем все результаты
-    return query.all()
-
-# Определяем функцию для получения энергетиков бренда
+# =============== READ ALL ENERGIES ONE BRAND===============
 def get_energies_by_brand(db: Session, brand_id: int, skip: int = 0, limit: int = 100):
     """
     Получает все энергетики бренда с:
@@ -112,7 +110,9 @@ def get_energies_by_brand(db: Session, brand_id: int, skip: int = 0, limit: int 
         for energy, average_rating, review_count in results
     ]
 
-# Создание нового энергетика
+# =============== ONLY ADMINS ===============
+
+# =============== CREATE ===============
 def create_energy(db: Session, energy: EnergyCreate):
     """
     Создает новый энергетик в базе данных.
@@ -130,7 +130,14 @@ def create_energy(db: Session, energy: EnergyCreate):
     db.refresh(db_energy)
     return db_energy
 
-# Обновление энергетика
+# =============== READ ALL WITHOUT PAGINATION ===============
+def get_energies_admin(db: Session):
+    # Выполняем запрос к таблице Energy
+    query = db.query(Energy)
+    # Получаем все результаты
+    return query.all()
+
+# =============== UPDATE ===============
 def update_energy(db: Session, energy_id: int, energy_update: EnergyUpdate):
     """
     Обновляет данные энергетика по его ID.
@@ -145,7 +152,7 @@ def update_energy(db: Session, energy_id: int, energy_update: EnergyUpdate):
     db.refresh(db_energy)
     return db_energy
 
-# Удаление энергетика
+# =============== DELETE ===============
 def delete_energy(db: Session, energy_id: int):
     """
     Удаляет энергетик по его ID.

@@ -1,26 +1,19 @@
-# Импортируем APIRouter из FastAPI для создания маршрутов
 from fastapi import APIRouter, Depends, HTTPException, status
-# Импортируем Session из SQLAlchemy для работы с базой данных
 from sqlalchemy.orm import Session
-# Импортируем List из typing для аннотации списков
 from typing import List
-# Импортируем функции CRUD для отзывов и пользователей
+from fastapi.security import OAuth2PasswordBearer
+
+from app.core.auth import verify_token, verify_admin_token, get_current_user
+
+from app.db.database import get_db
+
+from app.schemas.reviews import Review, ReviewCreate, ReviewUpdate, ReviewWithRatings
+
 from app.services.reviews import create_review_with_ratings, get_review, update_review, delete_review, get_all_reviews
 from app.services.ratings import get_ratings_by_review
-# Импортируем функции для получения пользователя и отзыва по пользователю и энергетикам
 from app.services.users import get_user, get_review_by_user_and_energy
-# Импортируем функцию для получения энергетика
 from app.services.energies import get_energy
-# Импортируем функцию для получения пользователей (даже не зареганных) из ЧС
 from app.services.blacklist import get_blacklist_entry
-# Импортируем схемы для отзывов
-from app.schemas.reviews import Review, ReviewCreate, ReviewUpdate, ReviewWithRatings
-# Импортируем зависимость для получения сессии базы данных
-from app.db.database import get_db
-# Импортируем функции безопасности
-from app.core.security import verify_token, verify_admin_token
-# Импортируем OAuth2PasswordBearer для работы с JWT
-from fastapi.security import OAuth2PasswordBearer
 
 # Создаём маршрутизатор для эндпоинтов отзывов
 router = APIRouter()
@@ -28,34 +21,7 @@ router = APIRouter()
 # Настройка OAuth2 для проверки JWT-токена
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/verify")
 
-# Зависимость для получения текущего пользователя из JWT-токена
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    """
-    Проверяет JWT-токен и возвращает данные текущего пользователя.
-    """
-    payload = verify_token(token)
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token: user_id not found")
-    return {"user_id": int(user_id)}
-
-# Определяем эндпоинт для получения списка всех отзывов (только для админов)
-@router.get("/", response_model=List[ReviewWithRatings])
-def read_all_reviews(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db),
-    token: str = Depends(oauth2_scheme)
-):
-    """
-    Эндпоинт для получения списка всех отзывов с пагинацией.
-    Доступен только администраторам.
-    """
-    verify_admin_token(token, db)
-    reviews = get_all_reviews(db, skip=skip, limit=limit)
-    return reviews
-
-# Определяем эндпоинт для создания отзыва
+# =============== CREATE ===============
 @router.post("/", response_model=Review, status_code=status.HTTP_201_CREATED)
 def create_review(
     # Тело запроса: данные для создания отзыва
@@ -110,7 +76,7 @@ def create_review(
     # Вызываем функцию для создания отзыва с оценками
     return create_review_with_ratings(db=db, review=review)
 
-# Определяем эндпоинт для редактирования отзыва
+# =============== UPDATE ===============
 @router.put("/{review_id}", response_model=Review)
 def update_review_endpoint(
     # Параметр пути: ID отзыва
@@ -139,7 +105,7 @@ def update_review_endpoint(
         raise HTTPException(status_code=404, detail="Отзыв не найден")
     return updated_review
 
-# Определяем эндпоинт для удаления отзыва
+# =============== DELETE ===============
 @router.delete("/{review_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_review_endpoint(
     # Параметр пути: ID отзыва
@@ -166,3 +132,21 @@ def delete_review_endpoint(
     if not success:
         raise HTTPException(status_code=404, detail="Отзыв не найден")
     return None
+
+# =============== ONLY ADMINS ===============
+
+# =============== READ ALL ===============
+@router.get("/", response_model=List[ReviewWithRatings])
+def read_all_reviews(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """
+    Эндпоинт для получения списка всех отзывов с пагинацией.
+    Доступен только администраторам.
+    """
+    verify_admin_token(token, db)
+    reviews = get_all_reviews(db, skip=skip, limit=limit)
+    return reviews

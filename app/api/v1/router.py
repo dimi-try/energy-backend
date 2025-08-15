@@ -1,5 +1,6 @@
 # Импортируем APIRouter из FastAPI для создания маршрутизатора
 from fastapi import APIRouter
+
 # Импортируем маршруты для брендов
 from app.api.v1.endpoints import brands
 # Импортируем маршруты для энергетиков

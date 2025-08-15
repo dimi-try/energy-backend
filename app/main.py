@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 # Импортируем маршруты версии v1
 from app.api.v1.router import api_router
 
+from app.core.config import FRONTEND_URL
+
 # Создаём экземпляр приложения FastAPI
 app = FastAPI(
     # Устанавливаем заголовок приложения
@@ -17,12 +19,8 @@ app = FastAPI(
 
 # Определяем список разрешённых источников для CORS
 origins = [
-    # Разрешаем запросы с фронтенда (локальный хост)
-    "http://localhost:3000",
-    # Разрешаем запросы с продакшн-фронтенда (замените на ваш домен)
-    "https://your-frontend-domain.com",
+    FRONTEND_URL
 ]
-origins = ["*"]  # Разрешаем все источники (для разработки)
 
 # Добавляем CORS middleware для обработки кросс-доменных запросов
 app.add_middleware(

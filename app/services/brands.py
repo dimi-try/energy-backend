@@ -1,13 +1,22 @@
-# Импортируем Session из SQLAlchemy для работы с базой данных
 from sqlalchemy.orm import Session
-# Импортируем функции SQLAlchemy для агрегации и сортировки
 from sqlalchemy import func, distinct
-# Импортируем модели
+
 from app.db.models import Brand, Energy, Review, Rating
-# Импортируем схемы
+
 from app.schemas.brands import Brand as BrandSchema, BrandCreate, BrandUpdate
 
-# Определяем функцию для получения данных о бренде по ID
+# =============== READ ALL ===============
+def get_brands(db: Session, skip: int = 0, limit: int = 100):
+    # Выполняем запрос к таблице Brand
+    query = db.query(Brand)
+    # Применяем смещение для пагинации
+    query = query.offset(skip)
+    # Ограничиваем количество записей
+    query = query.limit(limit)
+    # Получаем все результаты
+    return query.all()
+
+# =============== READ ONE ===============
 def get_brand(db: Session, brand_id: int):
     """
     Получает данные о бренде по его ID, включая:
@@ -92,18 +101,9 @@ def get_brand(db: Session, brand_id: int):
     # Возвращаем None, если бренд не найден
     return None
 
-# Определяем функцию для получения списка брендов
-def get_brands(db: Session, skip: int = 0, limit: int = 100):
-    # Выполняем запрос к таблице Brand
-    query = db.query(Brand)
-    # Применяем смещение для пагинации
-    query = query.offset(skip)
-    # Ограничиваем количество записей
-    query = query.limit(limit)
-    # Получаем все результаты
-    return query.all()
+# =============== ONLY ADMINS ===============
 
-# Создание нового бренда
+# =============== CREATE ===============
 def create_brand(db: Session, brand: BrandCreate):
     """
     Создает новый бренд в базе данных.
@@ -117,7 +117,14 @@ def create_brand(db: Session, brand: BrandCreate):
     db.refresh(db_brand)
     return db_brand
 
-# Обновление бренда
+# =============== READ ALL WITHOUT PAGINATION ===============
+def get_brands_admin(db: Session):
+    # Выполняем запрос к таблице Brand
+    query = db.query(Brand)
+    # Получаем все результаты
+    return query.all()
+
+# =============== UPDATE ===============
 def update_brand(db: Session, brand_id: int, brand_update: BrandUpdate):
     """
     Обновляет данные бренда по его ID.
@@ -134,7 +141,7 @@ def update_brand(db: Session, brand_id: int, brand_update: BrandUpdate):
     db.refresh(db_brand)
     return db_brand
 
-# Удаление бренда
+# =============== DELETE ===============
 def delete_brand(db: Session, brand_id: int):
     """
     Удаляет бренд по его ID.
@@ -148,3 +155,4 @@ def delete_brand(db: Session, brand_id: int):
     db.delete(db_brand)
     db.commit()
     return True
+
