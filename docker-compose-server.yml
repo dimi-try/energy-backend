@@ -13,6 +13,7 @@ services:
       BACKEND_ALGORITHM: ${BACKEND_ALGORITHM}
       TG_ADMIN_IDS: ${TG_ADMIN_IDS}
       BOT_TOKEN: ${BOT_TOKEN}
+      FRONTEND_URL: ${FRONTEND_URL}
     ports:
       - "${BACKEND_HOST_PORT}:8000"
     depends_on:
