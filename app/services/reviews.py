@@ -1,13 +1,11 @@
-# Импортируем Session из SQLAlchemy для работы с базой данных
 from sqlalchemy.orm import Session
-# Импортируем функции SQLAlchemy для агрегации и сортировки
 from sqlalchemy import func, desc, distinct
-# Импортируем модели
-from app.db.models import Review, Rating
-# Импортируем схемы 
+
+from app.db.models import Review, Rating, Energy, Brand, User
+
 from app.schemas.reviews import ReviewCreate, ReviewUpdate
 
-# Определяем функцию для создания отзыва с оценками
+# =============== CREATE ===============
 def create_review_with_ratings(db: Session, review: ReviewCreate):
     # Создаём объект Review
     db_review = Review(
@@ -44,7 +42,7 @@ def create_review_with_ratings(db: Session, review: ReviewCreate):
     # Возвращаем отзыв
     return db_review
 
-# Определяем функцию для получения отзыва по ID
+# =============== READ ONE ===============
 def get_review(db: Session, review_id: int):
     # Выполняем запрос к таблице Review
     query = db.query(Review)
@@ -53,7 +51,37 @@ def get_review(db: Session, review_id: int):
     # Получаем первый результат
     return query.first()
 
-# Определяем функцию для обновления отзыва
+# =============== READ ALL REVIEWS ONE ENERGY ===============
+def get_reviews_by_energy(db: Session, energy_id: int, skip: int = 0, limit: int = 100):
+    # Выполняем запрос к таблице Review с фильтрацией и сортировкой
+    query = (
+        db.query(Review) # Выполняем запрос к таблице Review
+        .filter(Review.energy_id == energy_id) # Фильтруем по energy_id
+        .order_by(Review.created_at.desc())  # сортировка по убыванию (сначала новые)
+        .offset(skip) # Применяем смещение
+        .limit(limit) # Ограничиваем записи
+    )
+
+    # Получаем все результаты
+    result = query.all()
+
+    # Проверяем, есть ли результаты
+    if not result:
+        return []  
+    # Добавляем средний рейтинг к каждому отзыву
+    for review in result:   
+        # Выполняем запрос к таблице Rating для получения среднего рейтинга
+        avg_rating = (
+            db.query(func.avg(Rating.rating_value))
+            .filter(Rating.review_id == review.id)
+            .scalar()
+        )
+        # Устанавливаем средний рейтинг в отзыв
+        review.average_rating_review = round(float(avg_rating), 4) if avg_rating else 0.0
+    # Возвращаем список отзывов с установленным средним рейтингом
+    return result
+    
+# =============== UPDATE ===============
 def update_review(db: Session, review_id: int, review_update: ReviewUpdate):
     # Получаем отзыв по ID
     db_review = db.query(Review).filter(Review.id == review_id).first()
@@ -87,7 +115,7 @@ def update_review(db: Session, review_id: int, review_update: ReviewUpdate):
     db_review.average_rating_review = round(float(avg_rating), 4) if avg_rating else 0.0
     return db_review
 
-# Определяем функцию для удаления отзыва
+# =============== DELETE ===============
 def delete_review(db: Session, review_id: int):
     # Получаем отзыв по ID
     db_review = db.query(Review).filter(Review.id == review_id).first()
@@ -101,32 +129,27 @@ def delete_review(db: Session, review_id: int):
     db.commit()
     return True
 
-# Определяем функцию для получения отзывов на энергетик
-def get_reviews_by_energy(db: Session, energy_id: int, skip: int = 0, limit: int = 100):
-    # Выполняем запрос к таблице Review с фильтрацией и сортировкой
+# =============== ONLY ADMINS ===============
+
+# =============== READ ALL ===============
+def get_all_reviews(db: Session, skip: int = 0, limit: int = 100):
+    """
+    Получает список всех отзывов с пагинацией.
+    """
     query = (
-        db.query(Review) # Выполняем запрос к таблице Review
-        .filter(Review.energy_id == energy_id) # Фильтруем по energy_id
-        .order_by(Review.created_at.desc())  # сортировка по убыванию (сначала новые)
-        .offset(skip) # Применяем смещение
-        .limit(limit) # Ограничиваем записи
+        db.query(Review)
+        .join(Energy, Review.energy_id == Energy.id)
+        .join(User, Review.user_id == User.id)
+        .order_by(Review.created_at.desc())
+        .offset(skip)
+        .limit(limit)
     )
-
-    # Получаем все результаты
     result = query.all()
-
-    # Проверяем, есть ли результаты
-    if not result:
-        return []  
-    # Добавляем средний рейтинг к каждому отзыву
-    for review in result:   
-        # Выполняем запрос к таблице Rating для получения среднего рейтинга
+    for review in result:
         avg_rating = (
             db.query(func.avg(Rating.rating_value))
             .filter(Rating.review_id == review.id)
             .scalar()
         )
-        # Устанавливаем средний рейтинг в отзыв
         review.average_rating_review = round(float(avg_rating), 4) if avg_rating else 0.0
-    # Возвращаем список отзывов с установленным средним рейтингом
     return result

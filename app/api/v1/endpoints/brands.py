@@ -1,28 +1,34 @@
-# Импортируем APIRouter из FastAPI для создания маршрутов
-from fastapi import APIRouter, Depends, HTTPException
-# Импортируем Session из SQLAlchemy для работы с базой данных
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-# Импортируем List из typing для аннотации списков
 from typing import List
-# Импортируем функции CRUD для брендов
-from app.services.brands import get_brand, get_brands
-from app.services.energies import get_energies_by_brand
-# Импортируем схемы для брендов
-from app.schemas.brands import Brand
-from app.schemas.energies import EnergiesByBrand
-# Импортируем зависимость для получения сессии базы данных
+from fastapi.security import OAuth2PasswordBearer
+
+from app.core.auth import verify_admin_token
+
 from app.db.database import get_db
+
+from app.schemas.brands import Brand, BrandCreate, BrandUpdate
+from app.schemas.energies import EnergiesByBrand
+
+from app.services.brands import get_brand, get_brands, get_brands_admin, create_brand, update_brand, delete_brand
+from app.services.energies import get_energies_by_brand
 
 # Создаём маршрутизатор для эндпоинтов брендов
 router = APIRouter()
 
-# Закомментированный эндпоинт для списка всех брендов (сохранён как есть)
-# # Список всех брендов
-# @router.get("/", response_model=List[schemas.Brand])
-# def read_brands(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-#     return crud.get_brands(db, skip=skip, limit=limit)
+# Настройка OAuth2 для проверки JWT-токена
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/verify")
 
-# Определяем эндпоинт для получения данных о конкретном бренде
+# =============== READ ALL ===============
+@router.get("/", response_model=List[Brand])
+def read_brands(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """
+    Эндпоинт для получения списка всех брендов с пагинацией.
+    Доступен всем пользователям.
+    """
+    return get_brands(db, skip=skip, limit=limit)
+
+# =============== READ ONE ===============
 @router.get("/{brand_id}", response_model=Brand)
 def read_brand(
     # Параметр пути: ID бренда
@@ -44,7 +50,7 @@ def read_brand(
     # Возвращаем объект бренда
     return db_brand
 
-# Определяем эндпоинт для получения списка энергетиков бренда
+# =============== READ ALL ENERGIES ONE BRAND===============
 @router.get("/{brand_id}/energies", response_model=List[EnergiesByBrand])
 def read_energies_by_brand(
     # Параметр пути: ID бренда
@@ -63,3 +69,66 @@ def read_energies_by_brand(
     """
     # Вызываем функцию для получения списка энергетиков бренда
     return get_energies_by_brand(db, brand_id=brand_id, skip=skip, limit=limit)
+
+# =============== ONLY ADMINS ===============
+
+# =============== CREATE ===============
+@router.post("/", response_model=Brand, status_code=status.HTTP_201_CREATED)
+def create_new_brand(
+    brand: BrandCreate,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """
+    Эндпоинт для создания нового бренда.
+    Доступен только администраторам.
+    """
+    verify_admin_token(token, db)
+    db_brand = create_brand(db, brand)
+    return db_brand
+
+# =============== READ ALL WITHOUT PAGINATION ===============
+@router.get("/admin/", response_model=List[Brand])
+def read_brands_admin(
+    db: Session = Depends(get_db)
+):
+    """
+    Эндпоинт для получения списка всех брендов без пагинации для админ-панели.
+    Доступен всем пользователям.
+    """
+    return get_brands_admin(db)
+
+# =============== UPDATE ===============
+@router.put("/{brand_id}", response_model=Brand)
+def update_existing_brand(
+    brand_id: int,
+    brand_update: BrandUpdate,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """
+    Эндпоинт для обновления данных бренда по его ID.
+    Доступен только администраторам.
+    """
+    verify_admin_token(token, db)
+    db_brand = update_brand(db, brand_id, brand_update)
+    if not db_brand:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    return db_brand
+
+# =============== DELETE ===============
+@router.delete("/{brand_id}", response_model=dict)
+def delete_existing_brand(
+    brand_id: int,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """
+    Эндпоинт для удаления бренда по его ID.
+    Доступен только администраторам.
+    """
+    verify_admin_token(token, db)
+    success = delete_brand(db, brand_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    return {"success": True, "message": "Brand deleted successfully"}

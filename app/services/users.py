@@ -1,13 +1,42 @@
-# Импортируем Session из SQLAlchemy для работы с базой данных
 from sqlalchemy.orm import Session
-# Импортируем Dict и Any из typing для аннотации
 from typing import Dict, Any
-# Импортируем модели
-from app.db.models import User, Review, Rating, Energy, Brand, Criteria
-# Импортируем схемы
+from sqlalchemy.exc import DataError
+from fastapi import HTTPException
+
+from app.core.config import TG_ADMIN_IDS
+
+from app.db.models import User, Review, Rating, Energy, Brand, Criteria, Role, UserRole
+
 from app.schemas.users import User as UserSchema, UserCreate, UserUpdate
 
-# Определяем функцию для получения пользователя по ID
+# =============== CREATE ===============
+def create_user(db: Session, user: UserCreate, telegram_id: int):
+    try:
+        # Создаём новый объект User
+        db_user = User(
+            id=telegram_id,  # Устанавливаем telegram_id как id
+            username=user.username
+        )
+        # Добавляем объект в сессию
+        db.add(db_user)
+        # Назначаем роль
+        role_name = "admin" if str(telegram_id) in TG_ADMIN_IDS else "user"
+        role = db.query(Role).filter(Role.name == role_name).first()
+        if not role:
+            raise ValueError(f"Role {role_name} not found in database")
+        user_role = UserRole(user_id=telegram_id, role_id=role.id)
+        db.add(user_role)
+        # Фиксируем изменения
+        db.commit()
+        # Обновляем объект
+        db.refresh(db_user)
+        # Возвращаем пользователя
+        return db_user
+    except DataError as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Invalid telegram_id: {str(e)}")
+
+# =============== READ ONE ===============
 def get_user(db: Session, user_id: int):
     # Выполняем запрос к таблице User
     query = db.query(User)
@@ -16,23 +45,7 @@ def get_user(db: Session, user_id: int):
     # Получаем первый результат
     return query.first()
 
-# Определяем функцию для создания пользователя
-def create_user(db: Session, user: UserCreate):
-    # Создаём новый объект User
-    db_user = User(
-        # Устанавливаем имя пользователя
-        username=user.username
-    )
-    # Добавляем объект в сессию
-    db.add(db_user)
-    # Фиксируем изменения
-    db.commit()
-    # Обновляем объект
-    db.refresh(db_user)
-    # Возвращаем пользователя
-    return db_user
-
-# Определяем функцию для обновления пользователя
+# =============== UPDATE ===============
 def update_user(db: Session, user_id: int, user_update: UserUpdate):
     # Получаем пользователя по ID
     db_user = db.query(User).get(user_id)
@@ -47,19 +60,7 @@ def update_user(db: Session, user_id: int, user_update: UserUpdate):
     db.refresh(db_user)
     return db_user
 
-# Определяем функцию для проверки отзыва пользователя
-def get_review_by_user_and_energy(db: Session, user_id: int, energy_id: int):
-    # Выполняем запрос к таблице Review
-    query = db.query(Review)
-    # Фильтруем по user_id и energy_id
-    query = query.filter(
-        Review.user_id == user_id,
-        Review.energy_id == energy_id
-    )
-    # Получаем первый результат
-    return query.first()
-
-# Определяем функцию для получения профиля пользователя
+# =============== READ ONE PROFILE ===============
 def get_user_profile(db: Session, user_id: int) -> Dict[str, Any]:
     # Получаем пользователя по ID
     user = db.query(User).get(user_id)
@@ -130,7 +131,7 @@ def get_user_profile(db: Session, user_id: int) -> Dict[str, Any]:
         "favorite_energy": favorite_energy
     }
 
-# Определяем функцию для получения отзывов пользователя
+# =============== READ ALL REVIEWS ONE USER===============
 def get_user_reviews(db: Session, user_id: int, skip: int = 0, limit: int = 100):
     # Проверяем существование пользователя
     user = db.query(User).get(user_id)
@@ -167,3 +168,42 @@ def get_user_reviews(db: Session, user_id: int, skip: int = 0, limit: int = 100)
         result.append(review_dict)
     # Возвращаем результат
     return {"reviews": result}
+
+# =============== READ ALREADY REVIEW BY USER ===============
+def get_review_by_user_and_energy(db: Session, user_id: int, energy_id: int):
+    # Выполняем запрос к таблице Review
+    query = db.query(Review)
+    # Фильтруем по user_id и energy_id
+    query = query.filter(
+        Review.user_id == user_id,
+        Review.energy_id == energy_id
+    )
+    # Получаем первый результат
+    return query.first()
+    
+# =============== ONLY ADMINS ===============
+
+# =============== READ ALL ===============
+def get_all_users(db: Session, skip: int = 0, limit: int = 100):
+    """
+    Получает список всех пользователей с пагинацией.
+    """
+    query = db.query(User)
+    query = query.offset(skip)
+    query = query.limit(limit)
+    return query.all()
+
+# =============== DELETE ===============
+def delete_user(db: Session, user_id: int):
+    """
+    Удаляет пользователя по его ID.
+    """
+    db_user = db.query(User).filter(User.id == user_id).first()
+    if not db_user:
+        return False
+    # Удаляем связанные записи в таблице user_roles
+    db.query(UserRole).filter(UserRole.user_id == user_id).delete()
+    # Удаляем пользователя
+    db.delete(db_user)
+    db.commit()
+    return True

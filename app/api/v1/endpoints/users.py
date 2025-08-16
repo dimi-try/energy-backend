@@ -1,17 +1,15 @@
-# Импортируем APIRouter из FastAPI для создания маршрутов
 from fastapi import APIRouter, Depends, HTTPException, status
-# Импортируем Session из SQLAlchemy для работы с базой данных
 from sqlalchemy.orm import Session
-# Импортируем функции CRUD для пользователей
-from app.services.users import get_user, create_user, get_user_profile, get_user_reviews, update_user
-# Импортируем схемы для пользователей
-from app.schemas.users import User, UserCreate, UserProfile, UserReviews, UserUpdate
-# Импортируем зависимость для получения сессии базы данных
-from app.db.database import get_db
-# Импортируем функции безопасности
-from app.core.security import verify_token
-# Импортируем OAuth2PasswordBearer для работы с JWT
+from typing import List
 from fastapi.security import OAuth2PasswordBearer
+
+from app.core.auth import verify_token, verify_admin_token, get_current_user, get_user_role
+
+from app.db.database import get_db
+
+from app.schemas.users import User, UserCreate, UserProfile, UserReviews, UserUpdate
+
+from app.services.users import get_user, create_user, get_user_profile, get_user_reviews, update_user, get_all_users, delete_user
 
 # Создаём маршрутизатор для эндпоинтов пользователей
 router = APIRouter()
@@ -19,18 +17,7 @@ router = APIRouter()
 # Настройка OAuth2 для проверки JWT-токена
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/verify")
 
-# Зависимость для получения текущего пользователя из JWT-токена
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    """
-    Проверяет JWT-токен и возвращает данные текущего пользователя.
-    """
-    payload = verify_token(token)
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token: user_id not found")
-    return {"user_id": int(user_id)}
-
-# Определяем эндпоинт для получения данных о пользователе
+# =============== READ ONE ===============
 @router.get("/{user_id}", response_model=User)
 def read_user(
     # Параметр пути: ID пользователя
@@ -56,7 +43,7 @@ def read_user(
     # Возвращаем объект пользователя
     return db_user
 
-# Определяем эндпоинт для получения профиля пользователя
+# =============== READ ONE PROFILE ===============
 @router.get("/{user_id}/profile", response_model=UserProfile)
 def get_user_profile_endpoint(
     # Параметр пути: ID пользователя
@@ -82,7 +69,7 @@ def get_user_profile_endpoint(
     # Возвращаем профиль пользователя
     return profile
 
-# Определяем эндпоинт для редактирования профиля пользователя
+# =============== UPDATE ONE PROFILE ===============
 @router.put("/{user_id}/profile", response_model=User)
 def update_user_profile(
     # Параметр пути: ID пользователя
@@ -107,7 +94,7 @@ def update_user_profile(
         raise HTTPException(status_code=404, detail="User not found")
     return updated_user
 
-# Определяем эндпоинт для получения отзывов пользователя
+# =============== READ ALL REVIEWS ONE USER===============
 @router.get("/{user_id}/reviews", response_model=UserReviews)
 def get_user_reviews_endpoint(
     # Параметр пути: ID пользователя
@@ -132,3 +119,50 @@ def get_user_reviews_endpoint(
         raise HTTPException(status_code=404, detail="Reviews not found")
     # Возвращаем отзывы пользователя
     return reviews
+
+# =============== READ OWN ROLE ===============
+@router.get("/me/role", response_model=dict)
+def get_user_role_endpoint(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Эндпоинт для получения роли текущего пользователя.
+    """
+    role = get_user_role(db, user_id=current_user["user_id"])
+    return {"role": role}
+
+# =============== ONLY ADMINS ===============
+
+# =============== READ ALL ===============
+@router.get("/", response_model=List[User])
+def read_all_users(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """
+    Эндпоинт для получения списка всех пользователей с пагинацией.
+    Доступен только администраторам.
+    """
+    verify_admin_token(token, db)
+    return get_all_users(db, skip=skip, limit=limit)
+
+# =============== DELETE ===============
+@router.delete("/{user_id}", response_model=dict)
+def delete_user_endpoint(
+    user_id: int,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """
+    Эндпоинт для удаления пользователя по его ID.
+    Доступен только администраторам.
+    """
+    verify_admin_token(token, db)
+    success = delete_user(db, user_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"success": True, "message": "User deleted successfully"}
+

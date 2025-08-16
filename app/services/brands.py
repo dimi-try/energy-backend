@@ -1,13 +1,22 @@
-# Импортируем Session из SQLAlchemy для работы с базой данных
 from sqlalchemy.orm import Session
-# Импортируем функции SQLAlchemy для агрегации и сортировки
 from sqlalchemy import func, distinct
-# Импортируем модели
-from app.db.models import Brand, Energy, Review, Rating
-# Импортируем схемы
-from app.schemas.brands import Brand as BrandSchema
 
-# Определяем функцию для получения данных о бренде по ID
+from app.db.models import Brand, Energy, Review, Rating
+
+from app.schemas.brands import Brand as BrandSchema, BrandCreate, BrandUpdate
+
+# =============== READ ALL ===============
+def get_brands(db: Session, skip: int = 0, limit: int = 100):
+    # Выполняем запрос к таблице Brand
+    query = db.query(Brand)
+    # Применяем смещение для пагинации
+    query = query.offset(skip)
+    # Ограничиваем количество записей
+    query = query.limit(limit)
+    # Получаем все результаты
+    return query.all()
+
+# =============== READ ONE ===============
 def get_brand(db: Session, brand_id: int):
     """
     Получает данные о бренде по его ID, включая:
@@ -92,13 +101,58 @@ def get_brand(db: Session, brand_id: int):
     # Возвращаем None, если бренд не найден
     return None
 
-# Определяем функцию для получения списка брендов
-def get_brands(db: Session, skip: int = 0, limit: int = 100):
+# =============== ONLY ADMINS ===============
+
+# =============== CREATE ===============
+def create_brand(db: Session, brand: BrandCreate):
+    """
+    Создает новый бренд в базе данных.
+    :param db: Сессия базы данных
+    :param brand: Данные для создания бренда
+    :return: Созданный бренд
+    """
+    db_brand = Brand(name=brand.name)
+    db.add(db_brand)
+    db.commit()
+    db.refresh(db_brand)
+    return db_brand
+
+# =============== READ ALL WITHOUT PAGINATION ===============
+def get_brands_admin(db: Session):
     # Выполняем запрос к таблице Brand
     query = db.query(Brand)
-    # Применяем смещение для пагинации
-    query = query.offset(skip)
-    # Ограничиваем количество записей
-    query = query.limit(limit)
     # Получаем все результаты
     return query.all()
+
+# =============== UPDATE ===============
+def update_brand(db: Session, brand_id: int, brand_update: BrandUpdate):
+    """
+    Обновляет данные бренда по его ID.
+    :param db: Сессия базы данных
+    :param brand_id: ID бренда
+    :param brand_update: Данные для обновления
+    :return: Обновленный бренд или None, если бренд не найден
+    """
+    db_brand = db.query(Brand).filter(Brand.id == brand_id).first()
+    if not db_brand:
+        return None
+    db_brand.name = brand_update.name
+    db.commit()
+    db.refresh(db_brand)
+    return db_brand
+
+# =============== DELETE ===============
+def delete_brand(db: Session, brand_id: int):
+    """
+    Удаляет бренд по его ID.
+    :param db: Сессия базы данных
+    :param brand_id: ID бренда
+    :return: True, если удаление успешно, False, если бренд не найден
+    """
+    db_brand = db.query(Brand).filter(Brand.id == brand_id).first()
+    if not db_brand:
+        return False
+    db.delete(db_brand)
+    db.commit()
+    return True
+

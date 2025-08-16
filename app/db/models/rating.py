@@ -1,8 +1,8 @@
-# Импортируем Column, Integer, ForeignKey, Numeric, TIMESTAMP из SQLAlchemy
+# Импортируем нужное из SQLAlchemy
 from sqlalchemy import Column, Integer, ForeignKey, Numeric, TIMESTAMP
 # Импортируем relationship для определения связей
 from sqlalchemy.orm import relationship
-# Импортируем datetime для установки значений по умолчанию
+# Импортируем datetime
 from datetime import datetime
 # Импортируем базовый класс
 from app.db.models.base import Base

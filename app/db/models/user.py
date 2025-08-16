@@ -1,5 +1,5 @@
 # Импортируем Column, Integer, String, Boolean, TIMESTAMP из SQLAlchemy
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, BigInteger  # Добавляем BigInteger
 # Импортируем relationship для определения связей
 from sqlalchemy.orm import relationship
 # Импортируем datetime для установки значений по умолчанию
@@ -12,16 +12,23 @@ class User(Base):
     # Указываем имя таблицы
     __tablename__ = "users"
 
-    # Определяем поле id как первичный ключ
-    id = Column(Integer, primary_key=True, index=True)
+    # Определяем поле id как первичный ключ с типом BigInteger
+    id = Column(BigInteger, primary_key=True, index=True)
     # Определяем поле username как уникальное строковое
-    username = Column(String(100), unique=True, nullable=False)
+    username = Column(String(100), nullable=False)
     # Определяем поле is_premium как булево
     is_premium = Column(Boolean, default=False)
     # Определяем поле created_at с текущей датой по умолчанию
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
 
     # Определяем связь один-ко-многим с отзывами
-    reviews = relationship("Review", back_populates="user")
+    reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")
     # Определяем связь многие-ко-многим с ролями
-    roles = relationship("UserRole", back_populates="user")
+    roles = relationship("UserRole", back_populates="user", cascade="all, delete-orphan")
+    # Определяем связь с черным списком, даже если пользователь еще не зарегистрирован
+    blacklist_entry = relationship(
+        "Blacklist",
+        back_populates="user",
+        primaryjoin="User.id==foreign(Blacklist.user_id)",
+        uselist=False
+    )
