@@ -147,6 +147,20 @@ docker push <your-dockerhub>
 docker exec -it ens-backend-1 /bin/sh
 ```
 
+Установить nano (по желанию, если вам удобнее пользоваться nano):
+```
+apk add --no-cache nano   # если контейнер на Alpine
+```
+или
+```
+apt-get update && apt-get install -y nano   # если Debian/Ubuntu
+```
+
+Заменить тестовые данные на свои
+```
+nano test_data.csv
+```
+
 Если папки versions нет, создать ее:
 ```
 mkdir -p /app/alembic/versions
