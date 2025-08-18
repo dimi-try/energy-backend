@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List
 from fastapi.security import OAuth2PasswordBearer
@@ -9,7 +9,7 @@ from app.db.database import get_db
 
 from app.schemas.users import User, UserCreate, UserProfile, UserReviews, UserUpdate
 
-from app.services.users import get_user, create_user, get_user_profile, get_user_reviews, update_user, get_all_users, delete_user
+from app.services.users import get_user, create_user, get_user_profile, get_user_reviews, update_user, get_all_users, delete_user, get_total_reviews
 
 # Создаём маршрутизатор для эндпоинтов пользователей
 router = APIRouter()
@@ -99,6 +99,9 @@ def update_user_profile(
 def get_user_reviews_endpoint(
     # Параметр пути: ID пользователя
     user_id: int,
+    # Параметры пагинации
+    limit: int = Query(10, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     # Зависимость: сессия базы данных
     db: Session = Depends(get_db),
     # Зависимость: текущий пользователь
@@ -112,13 +115,28 @@ def get_user_reviews_endpoint(
     if current_user["user_id"] != user_id:
         raise HTTPException(status_code=403, detail="Not authorized to access these reviews")
     # Вызываем функцию для получения отзывов пользователя
-    reviews = get_user_reviews(db, user_id=user_id)
+    reviews = get_user_reviews(db, user_id=user_id, skip=offset, limit=limit)
     # Проверяем, существуют ли отзывы
     if not reviews:
         # Вызываем исключение, если отзывы не найдены
         raise HTTPException(status_code=404, detail="Reviews not found")
     # Возвращаем отзывы пользователя
     return reviews
+
+# =============== READ TOTAL REVIEWS COUNT ===============
+@router.get("/{user_id}/reviews/count/")
+def get_total_reviews_endpoint(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Эндпоинт для получения общего количества отзывов пользователя.
+    Доступен только самому пользователю или администраторам.
+    """
+    if current_user["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access these reviews")
+    return {"total": get_total_reviews(db, user_id=user_id)}
 
 # =============== READ OWN ROLE ===============
 @router.get("/me/role", response_model=dict)
@@ -165,4 +183,3 @@ def delete_user_endpoint(
     if not success:
         raise HTTPException(status_code=404, detail="User not found")
     return {"success": True, "message": "User deleted successfully"}
-

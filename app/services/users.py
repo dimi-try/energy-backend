@@ -132,7 +132,7 @@ def get_user_profile(db: Session, user_id: int) -> Dict[str, Any]:
     }
 
 # =============== READ ALL REVIEWS ONE USER===============
-def get_user_reviews(db: Session, user_id: int, skip: int = 0, limit: int = 100):
+def get_user_reviews(db: Session, user_id: int, skip: int = 0, limit: int = 10):
     # Проверяем существование пользователя
     user = db.query(User).get(user_id)
     if not user:
@@ -168,6 +168,13 @@ def get_user_reviews(db: Session, user_id: int, skip: int = 0, limit: int = 100)
         result.append(review_dict)
     # Возвращаем результат
     return {"reviews": result}
+
+# =============== READ TOTAL REVIEWS COUNT ===============
+def get_total_reviews(db: Session, user_id: int):
+    """
+    Возвращает общее количество отзывов пользователя.
+    """
+    return db.query(Review).filter(Review.user_id == user_id).count()
 
 # =============== READ ALREADY REVIEW BY USER ===============
 def get_review_by_user_and_energy(db: Session, user_id: int, energy_id: int):
