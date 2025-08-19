@@ -51,36 +51,6 @@ def get_review(db: Session, review_id: int):
     # Получаем первый результат
     return query.first()
 
-# =============== READ ALL REVIEWS ONE ENERGY ===============
-def get_reviews_by_energy(db: Session, energy_id: int, skip: int = 0, limit: int = 100):
-    # Выполняем запрос к таблице Review с фильтрацией и сортировкой
-    query = (
-        db.query(Review) # Выполняем запрос к таблице Review
-        .filter(Review.energy_id == energy_id) # Фильтруем по energy_id
-        .order_by(Review.created_at.desc())  # сортировка по убыванию (сначала новые)
-        .offset(skip) # Применяем смещение
-        .limit(limit) # Ограничиваем записи
-    )
-
-    # Получаем все результаты
-    result = query.all()
-
-    # Проверяем, есть ли результаты
-    if not result:
-        return []  
-    # Добавляем средний рейтинг к каждому отзыву
-    for review in result:   
-        # Выполняем запрос к таблице Rating для получения среднего рейтинга
-        avg_rating = (
-            db.query(func.avg(Rating.rating_value))
-            .filter(Rating.review_id == review.id)
-            .scalar()
-        )
-        # Устанавливаем средний рейтинг в отзыв
-        review.average_rating_review = round(float(avg_rating), 4) if avg_rating else 0.0
-    # Возвращаем список отзывов с установленным средним рейтингом
-    return result
-    
 # =============== UPDATE ===============
 def update_review(db: Session, review_id: int, review_update: ReviewUpdate):
     # Получаем отзыв по ID

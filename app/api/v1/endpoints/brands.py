@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from fastapi.security import OAuth2PasswordBearer
+from fastapi import Query
 
 from app.core.auth import verify_admin_token
 
@@ -10,8 +11,16 @@ from app.db.database import get_db
 from app.schemas.brands import Brand, BrandCreate, BrandUpdate
 from app.schemas.energies import EnergiesByBrand
 
-from app.services.brands import get_brand, get_brands, get_brands_admin, create_brand, update_brand, delete_brand
-from app.services.energies import get_energies_by_brand
+from app.services.brands import (
+    get_brand,
+    get_brands,
+    get_brands_admin,
+    create_brand,
+    update_brand,
+    delete_brand,
+    get_energies_by_brand,
+    get_total_energies_by_brand,
+)
 
 # Создаём маршрутизатор для эндпоинтов брендов
 router = APIRouter()
@@ -56,9 +65,9 @@ def read_energies_by_brand(
     # Параметр пути: ID бренда
     brand_id: int,
     # Параметр запроса: смещение для пагинации
-    skip: int = 0,
+    offset: int = Query(0, ge=0),
     # Параметр запроса: лимит записей
-    limit: int = 100,
+    limit: int = Query(10, ge=1, le=10),
     # Зависимость: сессия базы данных
     db: Session = Depends(get_db)
 ):
@@ -68,7 +77,19 @@ def read_energies_by_brand(
     Доступен всем пользователям (гостям, зарегистрированным пользователям и администраторам).
     """
     # Вызываем функцию для получения списка энергетиков бренда
-    return get_energies_by_brand(db, brand_id=brand_id, skip=skip, limit=limit)
+    return get_energies_by_brand(db, brand_id=brand_id, skip=offset, limit=limit)
+
+# =============== READ TOTAL ENERGIES COUNT FOR BRAND ===============
+@router.get("/{brand_id}/energies/count/")
+def get_total_energies_by_brand_endpoint(
+    brand_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Эндпоинт для получения общего количества энергетиков бренда.
+    Доступен всем пользователям.
+    """
+    return {"total": get_total_energies_by_brand(db, brand_id=brand_id)}
 
 # =============== ONLY ADMINS ===============
 

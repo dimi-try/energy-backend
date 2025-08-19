@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from fastapi.security import OAuth2PasswordBearer
+from fastapi import Query
 
 from app.core.auth import verify_admin_token
 
@@ -10,8 +11,16 @@ from app.db.database import get_db
 from app.schemas.energies import Energy, EnergyCreate, EnergyUpdate
 from app.schemas.reviews import ReviewWithRatings
 
-from app.services.energies import get_energies, get_energy, create_energy, update_energy, delete_energy, get_energies_admin
-from app.services.reviews import get_reviews_by_energy
+from app.services.energies import (
+    get_energies, 
+    get_energy, 
+    create_energy, 
+    update_energy, 
+    delete_energy, 
+    get_energies_admin, 
+    get_reviews_by_energy, 
+    get_total_reviews_by_energy,
+)
 
 # Создаём маршрутизатор для эндпоинтов энергетиков
 router = APIRouter()
@@ -64,9 +73,9 @@ def read_energy_reviews(
     # Параметр пути: ID энергетика
     energy_id: int,
     # Параметр запроса: смещение для пагинации
-    skip: int = 0,
+    offset: int = Query(0, ge=0),
     # Параметр запроса: лимит записей
-    limit: int = 100,
+    limit: int = Query(10, ge=1, le=10),
     # Зависимость: сессия базы данных
     db: Session = Depends(get_db)
 ):
@@ -75,7 +84,19 @@ def read_energy_reviews(
     Доступен всем пользователям (гостям, зарегистрированным пользователям и администраторам).
     """
     # Вызываем функцию для получения списка отзывов
-    return get_reviews_by_energy(db, energy_id=energy_id, skip=skip, limit=limit)
+    return get_reviews_by_energy(db, energy_id=energy_id, skip=offset, limit=limit)
+
+# =============== READ TOTAL REVIEWS COUNT FOR ENERGY ===============
+@router.get("/{energy_id}/reviews/count/")
+def get_total_reviews_by_energy_endpoint(
+    energy_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Эндпоинт для получения общего количества отзывов на энергетик.
+    Доступен всем пользователям.
+    """
+    return {"total": get_total_reviews_by_energy(db, energy_id=energy_id)}
 
 # =============== ONLY ADMINS ===============
 
