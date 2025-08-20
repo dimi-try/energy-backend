@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc, distinct
+from sqlalchemy import func, distinct
 
 from app.db.models import Energy, Review, Rating, Brand, Category
 
@@ -53,62 +53,42 @@ def get_energy(db: Session, energy_id: int):
     # Возвращаем None, если энергетик не найден
     return None
 
-# =============== READ ALL ENERGIES ONE BRAND===============
-def get_energies_by_brand(db: Session, brand_id: int, skip: int = 0, limit: int = 100):
-    """
-    Получает все энергетики бренда с:
-    - Средним рейтингом
-    - Количеством отзывов
-    - Сортировкой по рейтингу
-    Используется в эндпоинте GET /energies/brand/{brand_id}/, доступном всем пользователям.
-    """
-    # Выполняем запрос для получения энергетиков
-    results = (
-        # Начинаем запрос с таблицы Energy
-        db.query(
-            # Выбираем объект Energy
-            Energy,
-            # Вычисляем средний рейтинг
-            func.coalesce(func.round(func.avg(Rating.rating_value), 4), 0).label("average_rating"),
-            # Считаем количество отзывов
-            func.count(distinct(Review.id)).label("review_count")
-        )
-        # Фильтруем по brand_id
-        .filter(Energy.brand_id == brand_id)
-        # Левое соединение с таблицей Review
-        .outerjoin(Review, Energy.id == Review.energy_id)
-        # Левое соединение с таблицей Rating
-        .outerjoin(Rating, Review.id == Rating.review_id)
-        # Группируем по id энергетика
-        .group_by(Energy.id)
-        # Сортируем по рейтингу
-        .order_by(desc("average_rating"))
-        # Применяем смещение
-        .offset(skip)
-        # Ограничиваем записи
-        .limit(limit)
-        # Получаем все результаты
-        .all()
+# =============== READ ALL REVIEWS ONE ENERGY ===============
+def get_reviews_by_energy(db: Session, energy_id: int, skip: int = 0, limit: int = 10):
+    # Выполняем запрос к таблице Review с фильтрацией и сортировкой
+    query = (
+        db.query(Review) # Выполняем запрос к таблице Review
+        .filter(Review.energy_id == energy_id) # Фильтруем по energy_id
+        .order_by(Review.created_at.desc())  # сортировка по убыванию (сначала новые)
+        .offset(skip) # Применяем смещение
+        .limit(limit) # Ограничиваем записи
     )
 
-    # Преобразуем результаты в список словарей
-    return [
-        # Создаём словарь для каждого энергетика
-        {
-            # Распаковываем атрибуты Energy
-            **energy.__dict__,
-            # Устанавливаем средний рейтинг
-            "average_rating": float(average_rating),
-            # Устанавливаем количество отзывов
-            "review_count": review_count,
-            # Устанавливаем бренд
-            "brand": energy.brand,
-            # Устанавливаем категорию
-            "category": energy.category,
-        }
-        # Проходим по результатам
-        for energy, average_rating, review_count in results
-    ]
+    # Получаем все результаты
+    result = query.all()
+
+    # Проверяем, есть ли результаты
+    if not result:
+        return []  
+    # Добавляем средний рейтинг к каждому отзыву
+    for review in result:   
+        # Выполняем запрос к таблице Rating для получения среднего рейтинга
+        avg_rating = (
+            db.query(func.avg(Rating.rating_value))
+            .filter(Rating.review_id == review.id)
+            .scalar()
+        )
+        # Устанавливаем средний рейтинг в отзыв
+        review.average_rating_review = round(float(avg_rating), 4) if avg_rating else 0.0
+    # Возвращаем список отзывов с установленным средним рейтингом
+    return result
+    
+# =============== READ TOTAL REVIEWS COUNT FOR ENERGY ===============
+def get_total_reviews_by_energy(db: Session, energy_id: int):
+    """
+    Возвращает общее количество отзывов для указанного энергетика.
+    """
+    return db.query(Review).filter(Review.energy_id == energy_id).count()
 
 # =============== ONLY ADMINS ===============
 

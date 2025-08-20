@@ -6,7 +6,7 @@ from app.db.models import Energy, Review, Rating, Brand
 from app.schemas.top import EnergyTop, BrandTop
 
 # =============== READ ENERGY CHART ===============
-def get_top_energies(db: Session, limit: int = 100):
+def get_top_energies(db: Session, limit: int = 10, offset: int = 0):
     # Создаём подзапрос для среднего рейтинга
     avg_rating_subquery = (
         # Начинаем запрос с таблицы Review
@@ -68,7 +68,8 @@ def get_top_energies(db: Session, limit: int = 100):
             Energy.name
         )
         # Ограничиваем записи
-        .limit(limit)
+        .offset(offset)  # Добавляем смещение
+        .limit(limit)    # Ограничиваем количество записей
         # Получаем результаты
         .all()
     )
@@ -90,7 +91,7 @@ def get_top_energies(db: Session, limit: int = 100):
     } for energy, avg_rating, review_count in energies]
 
 # =============== READ BRAND CHART ===============
-def get_top_brands(db: Session, limit: int = 100):
+def get_top_brands(db: Session, limit: int = 10, offset: int = 0):
     """
     Получает топ брендов с:
     - Средним рейтингом (правильный расчет)
@@ -149,7 +150,8 @@ def get_top_brands(db: Session, limit: int = 100):
         # Сортируем по рейтингу
         .order_by(desc("average_rating"))
         # Ограничиваем записи
-        .limit(limit)
+        .offset(offset)  # Добавляем смещение
+        .limit(limit)    # Ограничиваем количество записей
         # Получаем результаты
         .all()
     )
@@ -174,3 +176,17 @@ def get_top_brands(db: Session, limit: int = 100):
         # Проходим по результатам
         for brand_id, name, average_rating, energy_count, review_count, rating_count in results
     ]
+
+# =============== READ TOTAL ENERGY COUNT ===============
+def get_total_energies(db: Session):
+    """
+    Возвращает общее количество энергетиков.
+    """
+    return db.query(Energy).count()
+
+# =============== READ TOTAL BRAND COUNT ===============
+def get_total_brands(db: Session):
+    """
+    Возвращает общее количество брендов.
+    """
+    return db.query(Brand).count()

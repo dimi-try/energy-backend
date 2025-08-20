@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func, distinct
+from sqlalchemy import func, desc, distinct
 
 from app.db.models import Brand, Energy, Review, Rating
 
@@ -101,6 +101,70 @@ def get_brand(db: Session, brand_id: int):
     # Возвращаем None, если бренд не найден
     return None
 
+# =============== READ ALL ENERGIES ONE BRAND===============
+def get_energies_by_brand(db: Session, brand_id: int, skip: int = 0, limit: int = 10):
+    """
+    Получает все энергетики бренда с:
+    - Средним рейтингом
+    - Количеством отзывов
+    - Сортировкой по рейтингу
+    """
+    # Выполняем запрос для получения энергетиков
+    results = (
+        # Начинаем запрос с таблицы Energy
+        db.query(
+            # Выбираем объект Energy
+            Energy,
+            # Вычисляем средний рейтинг
+            func.coalesce(func.round(func.avg(Rating.rating_value), 4), 0).label("average_rating"),
+            # Считаем количество отзывов
+            func.count(distinct(Review.id)).label("review_count")
+        )
+        # Фильтруем по brand_id
+        .filter(Energy.brand_id == brand_id)
+        # Левое соединение с таблицей Review
+        .outerjoin(Review, Energy.id == Review.energy_id)
+        # Левое соединение с таблицей Rating
+        .outerjoin(Rating, Review.id == Rating.review_id)
+        # Группируем по id энергетика
+        .group_by(Energy.id)
+        # Сортируем по рейтингу
+        .order_by(desc("average_rating"))
+        # Применяем смещение
+        .offset(skip)
+        # Ограничиваем записи
+        .limit(limit)
+        # Получаем все результаты
+        .all()
+    )
+
+    # Преобразуем результаты в список словарей
+    return [
+        # Создаём словарь для каждого энергетика
+        {
+            # Распаковываем атрибуты Energy
+            **energy.__dict__,
+            # Устанавливаем средний рейтинг
+            "average_rating": float(average_rating),
+            # Устанавливаем количество отзывов
+            "review_count": review_count,
+            # Устанавливаем бренд
+            "brand": energy.brand,
+            # Устанавливаем категорию
+            "category": energy.category,
+        }
+        # Проходим по результатам
+        for energy, average_rating, review_count in results
+    ]
+
+
+# =============== READ TOTAL ENERGIES COUNT FOR BRAND ===============
+def get_total_energies_by_brand(db: Session, brand_id: int):
+    """
+    Возвращает общее количество энергетиков для указанного бренда.
+    """
+    return db.query(Energy).filter(Energy.brand_id == brand_id).count()
+
 # =============== ONLY ADMINS ===============
 
 # =============== CREATE ===============
@@ -155,4 +219,3 @@ def delete_brand(db: Session, brand_id: int):
     db.delete(db_brand)
     db.commit()
     return True
-
