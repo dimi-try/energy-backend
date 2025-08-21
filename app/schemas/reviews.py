@@ -40,6 +40,8 @@ class ReviewUpdate(BaseModel):
     review_text: Optional[str] = None
     # список оценок по критериям, необязательное
     ratings: Optional[List[RatingBase]] = None
+    # URL изображения отзыва, необязательное
+    image_url: Optional[str] = None
 
 # =============== ONLY ADMINS ===============
 

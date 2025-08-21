@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Query
+import os
 
 from app.core.auth import verify_admin_token
+from app.core.file_utils import UPLOAD_DIR_ENERGY, validate_file, upload_file
 
 from app.db.database import get_db
 
@@ -100,6 +102,12 @@ def get_total_reviews_by_energy_endpoint(
 
 # =============== ONLY ADMINS ===============
 
+# =============== UPLOAD IMAGE ===============
+@router.post("/upload-image/")
+async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    verify_admin_token(token, db)
+    return await upload_file(file, UPLOAD_DIR_ENERGY)
+
 # =============== CREATE ===============
 @router.post("/", response_model=Energy, status_code=status.HTTP_201_CREATED)
 def create_new_energy(
@@ -112,6 +120,11 @@ def create_new_energy(
     Доступен только администраторам.
     """
     verify_admin_token(token, db)
+    if energy.image_url and not os.path.exists(energy.image_url):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Указанный файл изображения не существует"
+        )
     db_energy = create_energy(db, energy)
     return db_energy
 
@@ -141,6 +154,11 @@ def update_existing_energy(
     Доступен только администраторам.
     """
     verify_admin_token(token, db)
+    if energy_update.image_url and not os.path.exists(energy_update.image_url):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Указанный файл изображения не существует"
+        )
     db_energy = update_energy(db, energy_id, energy_update)
     if not db_energy:
         raise HTTPException(status_code=404, detail="Energy not found")
