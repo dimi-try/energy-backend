@@ -6,7 +6,8 @@ from fastapi import Query
 import os
 
 from app.core.auth import verify_admin_token
-from app.core.file_utils import UPLOAD_DIR_ENERGY, validate_file, upload_file
+from app.core.config import UPLOAD_DIR_ENERGY
+from app.core.file_utils import validate_file, upload_file
 
 from app.db.database import get_db
 

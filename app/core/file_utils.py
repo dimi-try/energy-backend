@@ -3,15 +3,7 @@ import uuid
 from fastapi import HTTPException, status, UploadFile
 from PIL import Image
 import io
-from dotenv import load_dotenv
-
-load_dotenv()
-
-# Константы из .env
-UPLOAD_DIR_ENERGY = os.getenv("UPLOAD_DIR_ENERGY", "uploads/energy/")
-UPLOAD_DIR_REVIEW = os.getenv("UPLOAD_DIR_REVIEW", "uploads/reviews/")
-ALLOWED_EXTENSIONS = set(os.getenv("ALLOWED_EXTENSIONS", ".jpg,.jpeg,.png,.heic").split(","))
-MAX_FILE_SIZE = int(os.getenv("MAX_FILE_SIZE", 5 * 1024 * 1024))  # 5 MB
+from app.core.config import UPLOAD_DIR_ENERGY, UPLOAD_DIR_REVIEW, ALLOWED_EXTENSIONS, MAX_FILE_SIZE
 
 # Создание директорий
 os.makedirs(UPLOAD_DIR_ENERGY, exist_ok=True)
@@ -41,24 +33,25 @@ def validate_file(file: UploadFile):
             detail="Невалидный файл изображения"
         )
 
-async def upload_file(file: UploadFile, upload_dir: str, convert_heic: bool = True):
-    """Загрузка файла на сервер с конвертацией HEIC в PNG при необходимости."""
+async def upload_file(file: UploadFile, upload_dir: str):
+    """Загрузка файла на сервер с конвертацией HEIC, JPG, JPEG в PNG."""
     ext = validate_file(file)
-    file_name = f"{uuid.uuid4()}{'.png' if ext == '.heic' and convert_heic else ext}"
+    file_name = f"{uuid.uuid4()}.png"  # Всегда сохраняем как PNG
     file_path = os.path.join(upload_dir, file_name)
     
     try:
         img = Image.open(file.file)
-        if ext == ".heic" and convert_heic:
-            output = io.BytesIO()
-            img.save(output, format="PNG")
-            content = output.getvalue()
-        else:
-            content = await file.read()
+        output = io.BytesIO()
+        img.save(output, format="PNG")  # Конвертируем в PNG
+        content = output.getvalue()
         
         with open(file_path, "wb") as f:
             f.write(content)
-        return {"image_url": file_path}
+        
+        # Формируем полный URL
+        relative_path = os.path.join(upload_dir, file_name).replace("\\", "/")
+        full_url = f"{relative_path}"
+        return {"image_url": full_url}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

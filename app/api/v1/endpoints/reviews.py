@@ -5,7 +5,8 @@ from fastapi.security import OAuth2PasswordBearer
 import os
 
 from app.core.auth import verify_token, verify_admin_token, get_current_user
-from app.core.file_utils import UPLOAD_DIR_REVIEW, upload_file
+from app.core.config import UPLOAD_DIR_REVIEW
+from app.core.file_utils import upload_file
 
 from app.db.database import get_db
 

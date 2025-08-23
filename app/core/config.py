@@ -22,3 +22,9 @@ TG_ADMIN_IDS = os.getenv("TG_ADMIN_IDS", "").split(",")
 
 # =============== Разрешенные для CORS адреса ===============
 FRONTEND_URL = os.getenv("FRONTEND_URL")
+
+# =============== Настройки загрузки файлов ===============
+UPLOAD_DIR_ENERGY = os.getenv("UPLOAD_DIR_ENERGY", "uploads/energy/")
+UPLOAD_DIR_REVIEW = os.getenv("UPLOAD_DIR_REVIEW", "uploads/reviews/")
+ALLOWED_EXTENSIONS = set(os.getenv("ALLOWED_EXTENSIONS", ".jpg,.jpeg,.png,.heic").split(","))
+MAX_FILE_SIZE = int(os.getenv("MAX_FILE_SIZE", 5 * 1024 * 1024))  # 5 MB
