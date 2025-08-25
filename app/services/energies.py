@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func, distinct
+import os
 
 from app.db.models import Energy, Review, Rating, Brand, Category
 
@@ -140,6 +141,9 @@ def delete_energy(db: Session, energy_id: int):
     db_energy = db.query(Energy).filter(Energy.id == energy_id).first()
     if not db_energy:
         return False
+    # Удаляем файл
+    if db_energy.image_url and os.path.exists(db_energy.image_url):
+        os.remove(db_energy.image_url)  
     db.delete(db_energy)
     db.commit()
     return True

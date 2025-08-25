@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc, distinct
+import os
 
 from app.db.models import Review, Rating, Energy, Brand, User
 
@@ -14,7 +15,9 @@ def create_review_with_ratings(db: Session, review: ReviewCreate):
         # Устанавливаем ID энергетика
         energy_id=review.energy_id,
         # Устанавливаем текст отзыва
-        review_text=review.review_text
+        review_text=review.review_text,
+        # Устанавливаем URL изображения отзыва,
+        image_url=review.image_url            
     )
     # Добавляем отзыв в сессию
     db.add(db_review)
@@ -60,6 +63,11 @@ def update_review(db: Session, review_id: int, review_update: ReviewUpdate):
     # Обновляем текст отзыва, если предоставлен
     if review_update.review_text is not None:
         db_review.review_text = review_update.review_text
+    # Обновляем URL изображения, если предоставлен
+    if review_update.image_url is not None:
+        if db_review.image_url and os.path.exists(db_review.image_url):
+            os.remove(db_review.image_url)  # Удаляем старый файл
+        db_review.image_url = review_update.image_url
     # Обновляем оценки, если предоставлены
     if review_update.ratings:
         # Удаляем существующие оценки
@@ -91,6 +99,8 @@ def delete_review(db: Session, review_id: int):
     db_review = db.query(Review).filter(Review.id == review_id).first()
     if not db_review:
         return False
+    if db_review.image_url and os.path.exists(db_review.image_url):
+        os.remove(db_review.image_url)  # Удаляем файл
     # Удаляем связанные оценки
     db.query(Rating).filter(Rating.review_id == review_id).delete()
     # Удаляем отзыв

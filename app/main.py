@@ -4,8 +4,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 # Импортируем маршруты версии v1
 from app.api.v1.router import api_router
+# Импортируем StaticFiles для обслуживания статических файлов
+from fastapi.staticfiles import StaticFiles
 
-from app.core.config import FRONTEND_URL
+from app.core.config import FRONTEND_URL, UPLOAD_DIR_ENERGY, UPLOAD_DIR_REVIEW
 
 # Создаём экземпляр приложения FastAPI
 app = FastAPI(
@@ -35,6 +37,10 @@ app.add_middleware(
     # Разрешаем все заголовки
     allow_headers=["*"],
 )
+
+# Подключаем директории для статических файлов (изображения)
+app.mount("/uploads/energy", StaticFiles(directory=UPLOAD_DIR_ENERGY), name="energy_uploads")
+app.mount("/uploads/reviews", StaticFiles(directory=UPLOAD_DIR_REVIEW), name="review_uploads")
 
 # Подключаем маршруты версии v1 с префиксом /api/v1
 app.include_router(

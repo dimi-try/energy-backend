@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
 from fastapi.security import OAuth2PasswordBearer
+import os
 
 from app.core.auth import verify_token, verify_admin_token, get_current_user
+from app.core.config import UPLOAD_DIR_REVIEW
+from app.core.file_utils import upload_file
 
 from app.db.database import get_db
 
@@ -72,7 +75,16 @@ def create_review(
             status_code=400,
             detail="Вы уже оставили отзыв на этот энергетик! Вы можете отредактировать свой отзыв."
         )
-
+    if not review.ratings:
+        raise HTTPException(
+            status_code=400,
+            detail="Оценки обязательны для создания отзыва!"
+        )
+    if review.image_url and not os.path.exists(review.image_url):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Указанный файл изображения не существует"
+        )
     # Вызываем функцию для создания отзыва с оценками
     return create_review_with_ratings(db=db, review=review)
 
@@ -99,6 +111,11 @@ def update_review_endpoint(
     # Проверяем, что пользователь редактирует свой отзыв
     if db_review.user_id != current_user["user_id"]:
         raise HTTPException(status_code=403, detail="Пожалуйста, перезапустите бота и зайдите заново в приложение!")
+    if review_update.image_url and not os.path.exists(review_update.image_url):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Указанный файл изображения не существует"
+        )
     # Обновляем отзыв
     updated_review = update_review(db, review_id=review_id, review_update=review_update)
     if not updated_review:
@@ -132,6 +149,11 @@ def delete_review_endpoint(
     if not success:
         raise HTTPException(status_code=404, detail="Отзыв не найден")
     return None
+
+# =============== UPLOAD REVIEW IMAGE ===============
+@router.post("/upload-review-image/")
+async def upload_review_image(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    return await upload_file(file, UPLOAD_DIR_REVIEW)
 
 # =============== ONLY ADMINS ===============
 

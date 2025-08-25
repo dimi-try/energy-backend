@@ -17,7 +17,9 @@ class ReviewBase(BaseModel):
     # идентификатор пользователя, оставившего отзыв
     user_id: int
     # текст отзыва, обязательное
-    review_text: str
+    review_text: Optional[str] = None
+    # URL изображения отзыва, необязательное
+    image_url: Optional[str] = None
     # дата и время создания отзыва
     created_at: datetime
     # список объектов оценок, связанных с отзывом
