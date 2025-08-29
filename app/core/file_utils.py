@@ -3,11 +3,13 @@ import uuid
 from fastapi import HTTPException, status, UploadFile
 from PIL import Image
 import io
-from app.core.config import UPLOAD_DIR_ENERGY, UPLOAD_DIR_REVIEW, ALLOWED_EXTENSIONS, MAX_FILE_SIZE
+import pillow_heif
+from app.core.config import UPLOAD_DIR_ENERGY, UPLOAD_DIR_REVIEW, UPLOAD_DIR_USER, ALLOWED_EXTENSIONS, MAX_FILE_SIZE
 
 # Создание директорий
 os.makedirs(UPLOAD_DIR_ENERGY, exist_ok=True)
 os.makedirs(UPLOAD_DIR_REVIEW, exist_ok=True)
+os.makedirs(UPLOAD_DIR_USER, exist_ok=True)
 
 def validate_file(file: UploadFile):
     """Валидация загружаемого файла: проверка формата и размера."""
@@ -15,7 +17,7 @@ def validate_file(file: UploadFile):
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Недопустимый формат файла. Разрешены: JPG, JPEG, PNG, HEIC"
+            detail="Недопустимый формат файла. Разрешены: JPG, JPEG, PNG, HEIC, HEIF"
         )
     if file.size > MAX_FILE_SIZE:
         raise HTTPException(
@@ -34,7 +36,7 @@ def validate_file(file: UploadFile):
         )
 
 async def upload_file(file: UploadFile, upload_dir: str):
-    """Загрузка файла на сервер с конвертацией HEIC, JPG, JPEG в PNG."""
+    """Загрузка файла на сервер с конвертацией HEIC, HEIF, JPG, JPEG в PNG."""
     ext = validate_file(file)
     file_name = f"{uuid.uuid4()}.png"  # Всегда сохраняем как PNG
     file_path = os.path.join(upload_dir, file_name)

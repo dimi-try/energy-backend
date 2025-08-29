@@ -20,6 +20,8 @@ class User(Base):
     is_premium = Column(Boolean, default=False)
     # Определяем поле created_at с текущей датой по умолчанию
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
+    # Поле для URL фото
+    image_url = Column(String(255), nullable=True)
 
     # Определяем связь один-ко-многим с отзывами
     reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")
