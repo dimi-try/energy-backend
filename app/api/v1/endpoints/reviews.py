@@ -151,7 +151,7 @@ def delete_review_endpoint(
     return None
 
 # =============== UPLOAD REVIEW IMAGE ===============
-@router.post("/upload-review-image/")
+@router.post("/upload-image/")
 async def upload_review_image(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     return await upload_file(file, UPLOAD_DIR_REVIEW)
 

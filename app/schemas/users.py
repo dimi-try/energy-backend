@@ -28,6 +28,8 @@ class User(UserBase):
 class UserUpdate(BaseModel):
     # имя пользователя, необязательное, с максимальной длиной 100 символов
     username: Optional[str] = Field(None, max_length=100)
+    # URL изображения, необязательное
+    image_url: Optional[str] = None
     
 # =============== READ ONE PROFILE ===============
 class UserProfile(BaseModel):

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
 from fastapi.security import OAuth2PasswordBearer
@@ -149,6 +149,11 @@ def get_user_role_endpoint(
     """
     role = get_user_role(db, user_id=current_user["user_id"])
     return {"role": role}
+
+# =============== UPLOAD USER IMAGE ===============
+@router.post("/upload-image/")
+async def upload_user_image(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    return await upload_file(file, UPLOAD_DIR_USER)
 
 # =============== ONLY ADMINS ===============
 

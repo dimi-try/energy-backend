@@ -15,7 +15,8 @@ def create_user(db: Session, user: UserCreate, telegram_id: int):
         # Создаём новый объект User
         db_user = User(
             id=telegram_id,  # Устанавливаем telegram_id как id
-            username=user.username
+            username=user.username,
+            image_url=user.image_url
         )
         # Добавляем объект в сессию
         db.add(db_user)
@@ -54,6 +55,9 @@ def update_user(db: Session, user_id: int, user_update: UserUpdate):
     # Обновляем username, если он предоставлен
     if user_update.username:
         db_user.username = user_update.username
+    # Обновляем фото, если оно предоставлено
+    if user_update.image_url:
+        db_user.image_url = user_update.image_url
     # Фиксируем изменения
     db.commit()
     # Обновляем объект
@@ -210,6 +214,9 @@ def delete_user(db: Session, user_id: int):
         return False
     # Удаляем связанные записи в таблице user_roles
     db.query(UserRole).filter(UserRole.user_id == user_id).delete()
+    # Удаляем фото
+    if db_user.image_url and os.path.exists(db_user.image_url):
+        os.remove(db_user.image_url)
     # Удаляем пользователя
     db.delete(db_user)
     db.commit()
