@@ -4,6 +4,8 @@ from typing import List
 from fastapi.security import OAuth2PasswordBearer
 
 from app.core.auth import verify_token, verify_admin_token, get_current_user, get_user_role
+from app.core.config import UPLOAD_DIR_USER
+from app.core.file_utils import upload_file
 
 from app.db.database import get_db
 
