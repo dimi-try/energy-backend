@@ -15,8 +15,7 @@ def create_user(db: Session, user: UserCreate, telegram_id: int):
         # Создаём новый объект User
         db_user = User(
             id=telegram_id,  # Устанавливаем telegram_id как id
-            username=user.username,
-            image_url=user.image_url
+            username=user.username
         )
         # Добавляем объект в сессию
         db.add(db_user)
