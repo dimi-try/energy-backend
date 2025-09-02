@@ -111,11 +111,21 @@ def create_energy(db: Session, energy: EnergyCreate):
     db.refresh(db_energy)
     return db_energy
 
-# =============== READ ALL WITHOUT PAGINATION ===============
-def get_energies_admin(db: Session):
-    # Выполняем запрос к таблице Energy
-    query = db.query(Energy)
-    # Получаем все результаты
+# =============== READ ALL ADMIN ===============
+def get_energies_admin(db: Session, skip: int = 0, limit: int = 10, search: str = None):
+    """
+    Получает список всех энергетиков с пагинацией и поиском по названию бренда или энергетика.
+    """
+    query = db.query(Energy).join(Brand, Energy.brand_id == Brand.id)
+    
+    if search:
+        search = search.lower()
+        query = query.filter(
+            (func.lower(Energy.name).like(f"%{search}%")) |
+            (func.lower(Brand.name).like(f"%{search}%"))
+        )
+    
+    query = query.offset(skip).limit(limit)
     return query.all()
 
 # =============== UPDATE ===============
@@ -147,3 +157,19 @@ def delete_energy(db: Session, energy_id: int):
     db.delete(db_energy)
     db.commit()
     return True
+
+# =============== READ TOTAL ENERGIES COUNT FOR ADMIN ===============
+def get_total_energies_admin(db: Session, search: str = None):
+    """
+    Возвращает общее количество энергетиков с учетом поиска.
+    """
+    query = db.query(Energy).join(Brand, Energy.brand_id == Brand.id)
+    
+    if search:
+        search = search.lower()
+        query = query.filter(
+            (func.lower(Energy.name).like(f"%{search}%")) |
+            (func.lower(Brand.name).like(f"%{search}%"))
+        )
+    
+    return query.count()

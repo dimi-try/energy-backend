@@ -23,6 +23,7 @@ from app.services.energies import (
     get_energies_admin, 
     get_reviews_by_energy, 
     get_total_reviews_by_energy,
+    get_total_energies_admin,
 )
 
 # Создаём маршрутизатор для эндпоинтов энергетиков
@@ -132,7 +133,9 @@ def create_new_energy(
 # =============== READ ALL WITHOUT PAGINATION ===============
 @router.get("/admin/", response_model=List[Energy])
 def read_energies_admin(
-    # Зависимость: сессия базы данных
+    skip: int = Query(0, ge=0, description="Смещение для пагинации"),
+    limit: int = Query(10, ge=1, le=100, description="Лимит записей на страницу"),
+    search_query: str = Query(None, description="Поиск по названию бренда или энергетика"),
     db: Session = Depends(get_db)
 ):
     """
@@ -140,7 +143,7 @@ def read_energies_admin(
     Доступен всем пользователям (гостям, зарегистрированным пользователям и администраторам).
     """
     # Вызываем функцию для получения списка энергетиков
-    return get_energies_admin(db)
+    return get_energies_admin(db, skip=skip, limit=limit, search=search_query)
 
 # =============== UPDATE ===============
 @router.put("/{energy_id}", response_model=Energy)
@@ -181,3 +184,15 @@ def delete_existing_energy(
     if not success:
         raise HTTPException(status_code=404, detail="Energy not found")
     return {"success": True, "message": "Energy deleted successfully"}
+
+# =============== READ TOTAL ENERGIES COUNT FOR ADMIN ===============
+@router.get("/admin/count/")
+def get_total_energies_admin_endpoint(
+    search_query: str = Query(None, description="Поиск по названию бренда или энергетика"),
+    db: Session = Depends(get_db)
+):
+    """
+    Эндпоинт для получения общего количества энергетиков с учетом поиска.
+    Доступен всем пользователям.
+    """
+    return {"total": get_total_energies_admin(db, search=search_query)}
