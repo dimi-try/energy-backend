@@ -85,22 +85,7 @@ def seed_data():
                 username="test_user_1",
                 is_premium=False,
                 created_at=datetime.now()
-            ),
-            #=====Раскоментить, если хотим только одного тестового пользователя=====
-
-            User(
-                username="test_user_2",
-                is_premium=True,
-                created_at=datetime.now()
-            ),
-
-            User(
-                username="test_user_3",
-                is_premium=True,
-                created_at=datetime.now()
             )
-            
-            #=======================================================================
         ]
         db.add_all(users)
         db.commit()
@@ -142,10 +127,10 @@ def seed_data():
                 energy = Energy(
                     name=row["name"].strip(),
                     brand_id=brands[brand_name],
-                    category_id=random.choice(categories).id,  # Случайная категория
-                    description=random_description(), # Создает рандомное описание из набора букв
-                    image_url=random_description(), # Создает рандомное описание из набора букв
-                    ingredients=random_description(), # Создает рандомное описание из набора букв
+                    category_id=2,  # категория
+                    description="", # Создает описание
+                    image_url="", # Создает ссылку на изображение
+                    ingredients="", # Создает описание ингредиентов
                 )
                 db.add(energy)
                 db.commit()
@@ -159,21 +144,6 @@ def seed_data():
                         created_at=datetime.strptime(row["date"], "%Y-%m-%d")
                     )
                 ]
-
-                #=====Раскоментить, если хотим только одного тестового пользователя=====
-
-                # Случайное решение: второй пользователь оставляет отзыв (50% шанс)
-                if random.choice([True, False]):
-                    reviews.append(
-                        Review(
-                            user_id=users[1].id,
-                            energy_id=energy.id,
-                            review_text=random_description(),
-                            created_at=datetime.now()
-                        )
-                    )
-
-                #=======================================================================
 
                 # Добавляем ВСЕ созданные отзывы разом
                 db.add_all(reviews)
