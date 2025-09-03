@@ -209,7 +209,7 @@ scp -r ~/Downloads/uploads user@server:/image-backup/
 
 👉 Windows (PowerShell):
 ```
-scp -r C:\Users\uploads user@server:/image-backup/
+scp -r C:\Users\USER\Downloads\image-backup\uploads user@server:/image-backup/
 ```
 2️⃣ Перенести изображения с сервера в контейнер
 ```
@@ -218,6 +218,110 @@ docker cp /image-backup/uploads energy-backend-1:/app/
 3️⃣ Очистить временную папку на сервере
 ```
 rm -rf /image-backup/
+```
+
+---
+## 🗄 Резервное копирование базы данных
+
+### 📤 Создание резервной копии
+
+1️⃣ Подключаемся к серверу:
+
+```
+ssh user@server
+```
+
+2️⃣ Заходим в контейнер с PostgreSQL:
+
+```
+docker exec -it energy-postgres-1 bash
+```
+
+3️⃣ Делаем дамп базы:
+
+```
+pg_dump -U postgres -d energy_drinks_db -Fc > /backup_db/energy_drinks_db_backup.dump
+```
+
+4️⃣ Выходим из контейнера:
+
+```
+exit
+```
+
+5️⃣ Копируем дамп из контейнера на сервер:
+
+```
+docker cp energy-postgres-1:/backup_db/energy_drinks_db_backup.dump /backup_db/energy_drinks_db_backup.dump
+```
+
+6️⃣ Выходим с сервера:
+
+```
+exit
+```
+
+7️⃣ Скачиваем дамп на локальную машину:
+
+👉 Windows (PowerShell):
+
+```
+scp user@server:/backup_db/energy_drinks_db_backup.dump C:\Users\USER\Downloads\backup_db\energy_drinks_db_backup.dump
+```
+
+👉 Linux/macOS:
+
+```
+scp user@server:/backup_db/energy_drinks_db_backup.dump ./backup_db/energy_drinks_db_backup.dump
+```
+
+8️⃣ Подключаемся снова к серверу и чистим временные файлы:
+
+```
+ssh user@server 
+```
+``` 
+rm /backup_db/energy_drinks_db_backup.dump  
+docker exec energy-postgres-1 
+```
+```
+rm /backup_db/energy_drinks_db_backup.dump
+```
+
+---
+
+### 📥 Восстановление из резервной копии
+
+1️⃣ Загружаем дамп на сервер:
+
+👉 Windows (PowerShell):
+
+```
+scp C:\Users\USER\Downloads\backup_db\energy_drinks_db_backup.dump user@server:/backup_db/energy_drinks_db_backup.dump
+```
+
+👉 Linux/macOS:
+
+```
+scp ./backup_db/energy_drinks_db_backup.dump user@server:/backup_db/energy_drinks_db_backup.dump
+```
+
+2️⃣ Копируем дамп в контейнер:
+
+```
+docker cp /backup_db/energy_drinks_db_backup.dump energy-postgres-1:/backup_db/energy_drinks_db_backup.dump
+```
+
+3️⃣ Удаляем старую базу и создаём новую:
+
+```
+docker exec -it energy-postgres-1 psql -U postgres -c "DROP DATABASE IF EXISTS energy_drinks_db; CREATE DATABASE energy_drinks_db;"
+```
+
+4️⃣ Восстанавливаем базу из дампа:
+
+```
+docker exec -i energy-postgres-1 pg_restore -U postgres -d energy_drinks_db --verbose /backup_db/energy_drinks_db_backup.dump
 ```
 
 ---
