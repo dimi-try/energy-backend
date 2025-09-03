@@ -38,7 +38,7 @@ def read_energies(
     # Параметр запроса: смещение для пагинации
     skip: int = 0,
     # Параметр запроса: лимит записей
-    limit: int = 100,
+    limit: int = 10,
     # Зависимость: сессия базы данных
     db: Session = Depends(get_db)
 ):
@@ -130,7 +130,7 @@ def create_new_energy(
     db_energy = create_energy(db, energy)
     return db_energy
 
-# =============== READ ALL WITHOUT PAGINATION ===============
+# =============== READ ALL ADMIN ===============
 @router.get("/admin/", response_model=List[Energy])
 def read_energies_admin(
     skip: int = Query(0, ge=0, description="Смещение для пагинации"),
@@ -139,7 +139,8 @@ def read_energies_admin(
     db: Session = Depends(get_db)
 ):
     """
-    Эндпоинт для получения списка всех энергетиков без пагинации для админ-панели.
+    Эндпоинт для получения списка всех энергетиков с пагинацией и поиском по 
+    названию бренда или энергетика для админ-панели.
     Доступен всем пользователям (гостям, зарегистрированным пользователям и администраторам).
     """
     # Вызываем функцию для получения списка энергетиков
