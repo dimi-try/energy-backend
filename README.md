@@ -277,13 +277,13 @@ docker cp energy-postgres-1:/tmp/energy_drinks_db_backup.dump ./energy_drinks_db
 👉 Windows (PowerShell):
 
 ```
-scp user@server:/root/energy_drinks_db_backup.dump C:\Users\USER\Downloads\
+scp user@server:./energy_drinks_db_backup.dump C:\Users\USER\Downloads\
 ```
 
 👉 Linux/macOS:
 
 ```
-scp user@server:/root/energy_drinks_db_backup.dump ~/Downloads/
+scp user@server:./energy_drinks_db_backup.dump ~/Downloads/
 ```
 
 7️⃣ Подключаемся снова к серверу и чистим временные файлы:
