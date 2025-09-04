@@ -294,7 +294,7 @@ rm ./energy_drinks_db_backup.dump
 ``` 
 Заходим в контейнер
 ``` 
-docker exec energy-postgres-1 
+docker exec -it energy-postgres-1 bash
 ```
 Удаляем бэкап с контейнера
 ```
