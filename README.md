@@ -190,7 +190,7 @@ scp -r user@server:/image-backup/ ~/Downloads/
 
 👉 Windows (PowerShell):
 ```
-scp -r user@server:/image-backup/ C:\Users\
+scp -r user@server:/image-backup/ C:\Users\USER\Downloads\
 ```
 
 3️⃣ Очистить временную папку на сервере
@@ -204,12 +204,12 @@ rm -rf /image-backup/
 
 👉 Linux/macOS:
 ```
-scp -r ~/Downloads/uploads user@server:/image-backup/
+scp -r ~/Downloads/image-backup/ user@server:/image-backup/
 ```
 
 👉 Windows (PowerShell):
 ```
-scp -r C:\Users\USER\Downloads\image-backup\uploads user@server:/image-backup/
+scp -r C:\Users\USER\Downloads\image-backup\ user@server:/image-backup/
 ```
 2️⃣ Перенести изображения с сервера в контейнер
 ```
