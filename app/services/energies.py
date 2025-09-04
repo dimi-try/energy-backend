@@ -7,7 +7,7 @@ from app.db.models import Energy, Review, Rating, Brand, Category
 from app.schemas.energies import EnergyCreate, EnergyUpdate
 
 # =============== READ ALL ===============
-def get_energies(db: Session, skip: int = 0, limit: int = 100):
+def get_energies(db: Session, skip: int = 0, limit: int = 10):
     # Выполняем запрос к таблице Energy
     query = db.query(Energy)
     # Применяем смещение для пагинации
