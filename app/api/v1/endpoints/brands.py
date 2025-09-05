@@ -20,6 +20,7 @@ from app.services.brands import (
     delete_brand,
     get_energies_by_brand,
     get_total_energies_by_brand,
+    get_total_brands_admin,
 )
 
 # Создаём маршрутизатор для эндпоинтов брендов
@@ -108,16 +109,31 @@ def create_new_brand(
     db_brand = create_brand(db, brand)
     return db_brand
 
-# =============== READ ALL WITHOUT PAGINATION ===============
+# =============== READ ALL ADMIN ===============
 @router.get("/admin/", response_model=List[Brand])
 def read_brands_admin(
+    skip: int = Query(0, ge=0, description="Смещение для пагинации"),
+    limit: int = Query(10, ge=1, le=100, description="Лимит записей на страницу"),
+    search_query: str = Query(None, description="Поиск по названию бренда"),
     db: Session = Depends(get_db)
 ):
     """
-    Эндпоинт для получения списка всех брендов без пагинации для админ-панели.
+    Эндпоинт для получения списка всех брендов с пагинацией и поиском для админ-панели.
     Доступен всем пользователям.
     """
-    return get_brands_admin(db)
+    return get_brands_admin(db, skip=skip, limit=limit, search=search_query)
+
+# =============== READ TOTAL BRANDS COUNT FOR ADMIN ===============
+@router.get("/admin/count/")
+def get_total_brands_admin_endpoint(
+    search_query: str = Query(None, description="Поиск по названию бренда"),
+    db: Session = Depends(get_db)
+):
+    """
+    Эндпоинт для получения общего количества брендов с учетом поиска.
+    Доступен всем пользователям.
+    """
+    return {"total": get_total_brands_admin(db, search=search_query)}
 
 # =============== UPDATE ===============
 @router.put("/{brand_id}", response_model=Brand)

@@ -157,7 +157,6 @@ def get_energies_by_brand(db: Session, brand_id: int, skip: int = 0, limit: int 
         for energy, average_rating, review_count in results
     ]
 
-
 # =============== READ TOTAL ENERGIES COUNT FOR BRAND ===============
 def get_total_energies_by_brand(db: Session, brand_id: int):
     """
@@ -181,11 +180,18 @@ def create_brand(db: Session, brand: BrandCreate):
     db.refresh(db_brand)
     return db_brand
 
-# =============== READ ALL WITHOUT PAGINATION ===============
-def get_brands_admin(db: Session):
-    # Выполняем запрос к таблице Brand
+# =============== READ ALL ADMIN ===============
+def get_brands_admin(db: Session, skip: int = 0, limit: int = 10, search: str = None):
+    """
+    Получает список всех брендов с пагинацией и поиском по названию бренда.
+    """
     query = db.query(Brand)
-    # Получаем все результаты
+    
+    if search:
+        search = search.lower()
+        query = query.filter(func.lower(Brand.name).like(f"%{search}%"))
+    
+    query = query.offset(skip).limit(limit)
     return query.all()
 
 # =============== UPDATE ===============
@@ -219,3 +225,16 @@ def delete_brand(db: Session, brand_id: int):
     db.delete(db_brand)
     db.commit()
     return True
+
+# =============== READ TOTAL BRANDS COUNT FOR ADMIN ===============
+def get_total_brands_admin(db: Session, search: str = None):
+    """
+    Возвращает общее количество брендов с учетом поиска.
+    """
+    query = db.query(Brand)
+    
+    if search:
+        search = search.lower()
+        query = query.filter(func.lower(Brand.name).like(f"%{search}%"))
+    
+    return query.count()
