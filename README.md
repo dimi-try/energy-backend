@@ -227,7 +227,8 @@ scp -r ~/Downloads/image-backup/ user@server:/image-backup/
 
 3️⃣ Перенести изображения с сервера в контейнер
 ```
-docker cp /image-backup/uploads energy-backend-1:/app/
+docker cp /image-backup/. energy-backend-1:/app/uploads
+
 ```
 4️⃣ Очистить временную папку на сервере
 ```
