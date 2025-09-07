@@ -39,7 +39,7 @@ def get_blacklist_entry(db: Session, user_id: int):
     return entry
 
 # =============== READ ONE ===============
-def get_all_blacklist_entries(db: Session, skip: int = 0, limit: int = 100):
+def get_all_blacklist_entries(db: Session, skip: int = 0, limit: int = 10):
     """
     Получает список всех записей черного списка.
     """

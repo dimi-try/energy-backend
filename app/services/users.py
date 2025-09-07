@@ -194,7 +194,7 @@ def get_review_by_user_and_energy(db: Session, user_id: int, energy_id: int):
 # =============== ONLY ADMINS ===============
 
 # =============== READ ALL ===============
-def get_all_users(db: Session, skip: int = 0, limit: int = 100):
+def get_all_users(db: Session, skip: int = 0, limit: int = 10):
     """
     Получает список всех пользователей с пагинацией.
     """

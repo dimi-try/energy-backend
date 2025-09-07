@@ -6,7 +6,7 @@ from app.db.models import Brand, Energy, Review, Rating
 from app.schemas.brands import Brand as BrandSchema, BrandCreate, BrandUpdate
 
 # =============== READ ALL ===============
-def get_brands(db: Session, skip: int = 0, limit: int = 100):
+def get_brands(db: Session, skip: int = 0, limit: int = 10):
     # Выполняем запрос к таблице Brand
     query = db.query(Brand)
     # Применяем смещение для пагинации

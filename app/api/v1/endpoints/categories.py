@@ -23,7 +23,7 @@ def read_categories(
     # Параметр запроса: смещение для пагинации
     skip: int = 0,
     # Параметр запроса: лимит записей
-    limit: int = 100,
+    limit: int = 10,
     # Зависимость: сессия базы данных
     db: Session = Depends(get_db)
 ):

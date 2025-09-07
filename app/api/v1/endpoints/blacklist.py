@@ -45,7 +45,7 @@ def add_to_blacklist(
 @router.get("/", response_model=List[Blacklist])
 def read_blacklist(
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 10,
     db: Session = Depends(get_db),
     token: str = Depends(oauth2_scheme)
 ):

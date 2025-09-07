@@ -31,7 +31,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/verify")
 
 # =============== READ ALL ===============
 @router.get("/", response_model=List[Brand])
-def read_brands(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def read_brands(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     """
     Эндпоинт для получения списка всех брендов с пагинацией.
     Доступен всем пользователям.
@@ -123,17 +123,7 @@ def read_brands_admin(
     """
     return get_brands_admin(db, skip=skip, limit=limit, search=search_query)
 
-# =============== READ TOTAL BRANDS COUNT FOR ADMIN ===============
-@router.get("/admin/count/")
-def get_total_brands_admin_endpoint(
-    search_query: str = Query(None, description="Поиск по названию бренда"),
-    db: Session = Depends(get_db)
-):
-    """
-    Эндпоинт для получения общего количества брендов с учетом поиска.
-    Доступен всем пользователям.
-    """
-    return {"total": get_total_brands_admin(db, search=search_query)}
+
 
 # =============== UPDATE ===============
 @router.put("/{brand_id}", response_model=Brand)
@@ -169,3 +159,15 @@ def delete_existing_brand(
     if not success:
         raise HTTPException(status_code=404, detail="Brand not found")
     return {"success": True, "message": "Brand deleted successfully"}
+
+# =============== TOTAL BRANDS COUNT FOR ADMIN ===============
+@router.get("/admin/count/")
+def get_total_brands_admin_endpoint(
+    search_query: str = Query(None, description="Поиск по названию бренда"),
+    db: Session = Depends(get_db)
+):
+    """
+    Эндпоинт для получения общего количества брендов с учетом поиска.
+    Доступен всем пользователям.
+    """
+    return {"total": get_total_brands_admin(db, search=search_query)}
