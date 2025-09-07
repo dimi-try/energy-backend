@@ -64,6 +64,8 @@ class BrandBase(BaseModel):
 class UserBase(BaseModel):
     # Поле username: имя пользователя, обязательное, с максимальной длиной 100 символов
     username: str = Field(..., max_length=100)
+    # URL изображения, необязательное
+    image_url: Optional[str] = None
 
 # Базовая схема для черного списка
 class BlacklistBase(BaseModel):
