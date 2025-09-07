@@ -220,3 +220,12 @@ def delete_user(db: Session, user_id: int):
     db.delete(db_user)
     db.commit()
     return True
+
+# =============== READ TOTAL USERS COUNT FOR ADMIN ===============
+def get_total_users_admin(db: Session):
+    """
+    Возвращает общее количество пользователей.
+    """
+    query = db.query(User)
+    
+    return query.count()
