@@ -112,7 +112,7 @@ def delete_review(db: Session, review_id: int):
 # =============== ONLY ADMINS ===============
 
 # =============== READ ALL ===============
-def get_all_reviews(db: Session, skip: int = 0, limit: int = 100):
+def get_all_reviews(db: Session, skip: int = 0, limit: int = 10):
     """
     Получает список всех отзывов с пагинацией.
     """
@@ -133,3 +133,12 @@ def get_all_reviews(db: Session, skip: int = 0, limit: int = 100):
         )
         review.average_rating_review = round(float(avg_rating), 4) if avg_rating else 0.0
     return result
+
+# =============== READ TOTAL REVIEWS COUNT FOR ADMIN ===============
+def get_total_reviews_admin(db: Session):
+    """
+    Возвращает общее количество отзывов.
+    """
+    query = db.query(Review)
+    
+    return query.count()
