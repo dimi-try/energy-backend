@@ -16,6 +16,8 @@ class EnergyTop(BaseModel):
     brand: Brand
     # объект категории, необязательное
     category: Optional[Category] = None
+    # URL изображения энергетика, необязательное
+    image_url: Optional[str] = None
     # общее количество отзывов на энергетик
     review_count: int
     # Внутренний класс Config для настройки модели
