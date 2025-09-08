@@ -5,7 +5,7 @@ from app.db.models import Criteria
 from app.schemas.criteria import CriteriaUpdate
 
 # =============== READ ALL ===============
-def get_all_criteria(db: Session, skip: int = 0, limit: int = 100):
+def get_all_criteria(db: Session, skip: int = 0, limit: int = 10):
     # Выполняем запрос к таблице Criteria
     query = db.query(Criteria)
     # Применяем смещение

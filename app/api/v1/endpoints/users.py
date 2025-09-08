@@ -11,7 +11,7 @@ from app.db.database import get_db
 
 from app.schemas.users import User, UserCreate, UserProfile, UserReviews, UserUpdate
 
-from app.services.users import get_user, create_user, get_user_profile, get_user_reviews, update_user, get_all_users, delete_user, get_total_reviews
+from app.services.users import get_user, create_user, get_user_profile, get_user_reviews, update_user, get_all_users, delete_user, get_total_reviews, get_total_users_admin
 
 # Создаём маршрутизатор для эндпоинтов пользователей
 router = APIRouter()
@@ -162,8 +162,8 @@ async def upload_user_image(file: UploadFile = File(...), db: Session = Depends(
 # =============== READ ALL ===============
 @router.get("/", response_model=List[User])
 def read_all_users(
-    skip: int = 0,
-    limit: int = 100,
+    offset: int = 0,
+    limit: int = 10,
     db: Session = Depends(get_db),
     token: str = Depends(oauth2_scheme)
 ):
@@ -172,7 +172,7 @@ def read_all_users(
     Доступен только администраторам.
     """
     verify_admin_token(token, db)
-    return get_all_users(db, skip=skip, limit=limit)
+    return get_all_users(db, skip=offset, limit=limit)
 
 # =============== DELETE ===============
 @router.delete("/{user_id}", response_model=dict)
@@ -190,3 +190,17 @@ def delete_user_endpoint(
     if not success:
         raise HTTPException(status_code=404, detail="User not found")
     return {"success": True, "message": "User deleted successfully"}
+
+# =============== COUNT USERS ===============
+@router.get("/count/")
+def count_users(
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """
+    Эндпоинт для получения общего количества пользователей.
+    Доступен только администраторам.
+    """
+    verify_admin_token(token, db)
+    total = get_total_users_admin(db)
+    return {"total": total}

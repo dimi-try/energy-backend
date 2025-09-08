@@ -19,8 +19,6 @@ class User(UserBase):
     is_premium: bool
     # дата и время создания пользователя
     created_at: datetime
-    # URL изображения, необязательное
-    image_url: Optional[str] = None
     # Внутренний класс Config для настройки модели
     class Config:
         # Указываем, что модель может быть создана из атрибутов ORM-объектов SQLAlchemy

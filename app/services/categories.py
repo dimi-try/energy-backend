@@ -5,7 +5,7 @@ from app.db.models import Category
 from app.schemas.categories import CategoryCreate, CategoryUpdate
 
 # =============== READ ALL ===============
-def get_categories(db: Session, skip: int = 0, limit: int = 100):
+def get_categories(db: Session, skip: int = 0, limit: int = 10):
     # Выполняем запрос к таблице Category
     query = db.query(Category)
     # Применяем смещение

@@ -194,7 +194,7 @@ def get_review_by_user_and_energy(db: Session, user_id: int, energy_id: int):
 # =============== ONLY ADMINS ===============
 
 # =============== READ ALL ===============
-def get_all_users(db: Session, skip: int = 0, limit: int = 100):
+def get_all_users(db: Session, skip: int = 0, limit: int = 10):
     """
     Получает список всех пользователей с пагинацией.
     """
@@ -220,3 +220,12 @@ def delete_user(db: Session, user_id: int):
     db.delete(db_user)
     db.commit()
     return True
+
+# =============== READ TOTAL USERS COUNT FOR ADMIN ===============
+def get_total_users_admin(db: Session):
+    """
+    Возвращает общее количество пользователей.
+    """
+    query = db.query(User)
+    
+    return query.count()

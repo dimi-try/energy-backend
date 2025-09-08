@@ -12,7 +12,7 @@ from app.db.database import get_db
 
 from app.schemas.reviews import Review, ReviewCreate, ReviewUpdate, ReviewWithRatings
 
-from app.services.reviews import create_review_with_ratings, get_review, update_review, delete_review, get_all_reviews
+from app.services.reviews import create_review_with_ratings, get_review, update_review, delete_review, get_all_reviews, get_total_reviews_admin
 from app.services.ratings import get_ratings_by_review
 from app.services.users import get_user, get_review_by_user_and_energy
 from app.services.energies import get_energy
@@ -160,8 +160,8 @@ async def upload_review_image(file: UploadFile = File(...), db: Session = Depend
 # =============== READ ALL ===============
 @router.get("/", response_model=List[ReviewWithRatings])
 def read_all_reviews(
-    skip: int = 0,
-    limit: int = 100,
+    offset: int = 0,
+    limit: int = 10,
     db: Session = Depends(get_db),
     token: str = Depends(oauth2_scheme)
 ):
@@ -170,5 +170,19 @@ def read_all_reviews(
     Доступен только администраторам.
     """
     verify_admin_token(token, db)
-    reviews = get_all_reviews(db, skip=skip, limit=limit)
+    reviews = get_all_reviews(db, skip=offset, limit=limit)
     return reviews
+
+# =============== COUNT REVIEWS ===============
+@router.get("/count/")
+def count_reviews(
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """
+    Эндпоинт для получения общего количества отзывов.
+    Доступен только администраторам.
+    """
+    verify_admin_token(token, db)
+    total = get_total_reviews_admin(db)
+    return {"total": total}
