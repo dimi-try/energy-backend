@@ -21,6 +21,7 @@ from app.services.brands import (
     get_energies_by_brand,
     get_total_energies_by_brand,
     get_total_brands_admin,
+    get_brands_admin_select,
 )
 
 # Создаём маршрутизатор для эндпоинтов брендов
@@ -123,8 +124,6 @@ def read_brands_admin(
     """
     return get_brands_admin(db, skip=skip, limit=limit, search=search_query)
 
-
-
 # =============== UPDATE ===============
 @router.put("/{brand_id}", response_model=Brand)
 def update_existing_brand(
@@ -159,6 +158,17 @@ def delete_existing_brand(
     if not success:
         raise HTTPException(status_code=404, detail="Brand not found")
     return {"success": True, "message": "Brand deleted successfully"}
+
+# =============== READ ALL FOR SELECT===============
+@router.get("/admin/select", response_model=List[Brand])
+def read_brands_admin(
+    db: Session = Depends(get_db)
+):
+    """
+    Эндпоинт для получения списка всех брендов для выбора бренда при создании или изменении энергетика.
+    Доступен всем пользователям.
+    """
+    return get_brands_admin_select(db)
 
 # =============== TOTAL BRANDS COUNT FOR ADMIN ===============
 @router.get("/admin/count/")
