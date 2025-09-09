@@ -86,6 +86,8 @@ def get_top_energies(db: Session, limit: int = 10, offset: int = 0):
         "brand": energy.brand,
         # Устанавливаем категорию
         "category": energy.category,
+        # Устанавливаем изображение
+        "image_url": energy.image_url,
         # Устанавливаем количество отзывов
         "review_count": review_count
     } for energy, avg_rating, review_count in energies]

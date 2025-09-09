@@ -226,6 +226,14 @@ def delete_brand(db: Session, brand_id: int):
     db.commit()
     return True
 
+# =============== READ ALL FOR SELECT===============
+def get_brands_admin_select(db: Session):
+    """
+    Получает список всех брендов для выбора бренда при создании или изменении энергетика.
+    """
+    query = db.query(Brand)
+    return query.all()
+
 # =============== READ TOTAL BRANDS COUNT FOR ADMIN ===============
 def get_total_brands_admin(db: Session, search: str = None):
     """
