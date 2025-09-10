@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field, condecimal
 from typing import Optional, List
-from datetime import datetime
 
 from app.schemas.brands import Brand
 from app.schemas.energies import Energy
@@ -17,8 +16,8 @@ class User(UserBase):
     id: int
     # флаг, указывающий, является ли пользователь премиум-пользователем
     is_premium: bool
-    # дата и время создания пользователя
-    created_at: datetime
+    # дата и время создания пользователя (в формате Unix timestamp)
+    created_at: int
     # Внутренний класс Config для настройки модели
     class Config:
         # Указываем, что модель может быть создана из атрибутов ORM-объектов SQLAlchemy

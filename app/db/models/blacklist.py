@@ -1,9 +1,10 @@
 # Импортируем нужное из SQLAlchemy
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, BigInteger
+from sqlalchemy import Column, Integer, String, ForeignKey, BigInteger
 # Импортируем relationship для определения связей
 from sqlalchemy.orm import relationship
-# Импортируем datetime
-from datetime import datetime
+# Импортируем time для работы с временными метками
+import time
+
 # Импортируем базовый класс
 from app.db.models.base import Base
 
@@ -19,7 +20,7 @@ class Blacklist(Base):
     # Причина добавления в черный список
     reason = Column(String, nullable=True)
     # Определяем поле created_at с текущей датой по умолчанию
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(BigInteger, default=lambda: int(time.time()))  # Unix timestamp в секундах
     # Определяем связь с моделью User, даже если пользователь еще не зарегистрирован
     user = relationship(
         "User",

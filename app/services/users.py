@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from typing import Dict, Any
 from sqlalchemy.exc import DataError
 from fastapi import HTTPException
+import time
 
 from app.core.config import TG_ADMIN_IDS
 
@@ -15,7 +16,8 @@ def create_user(db: Session, user: UserCreate, telegram_id: int):
         # Создаём новый объект User
         db_user = User(
             id=telegram_id,  # Устанавливаем telegram_id как id
-            username=user.username
+            username=user.username,
+            created_at=int(time.time())  # Unix timestamp в UTC
         )
         # Добавляем объект в сессию
         db.add(db_user)

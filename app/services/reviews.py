@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc, distinct
 import os
+import time
 
 from app.db.models import Review, Rating, Energy, Brand, User
 
@@ -17,7 +18,9 @@ def create_review_with_ratings(db: Session, review: ReviewCreate):
         # Устанавливаем текст отзыва
         review_text=review.review_text,
         # Устанавливаем URL изображения отзыва,
-        image_url=review.image_url            
+        image_url=review.image_url,
+        # Устанавливаем время создания отзыва
+        created_at=int(time.time())        
     )
     # Добавляем отзыв в сессию
     db.add(db_review)

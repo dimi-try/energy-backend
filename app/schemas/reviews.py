@@ -14,6 +14,8 @@ class Review(ReviewBase):
     id: int
     # Информация о пользователе (его имя)
     user: UserBase
+    # дата и время создания отзыва
+    created_at: int
     # Внутренний класс Config для настройки модели
     class Config:
         # Указываем, что модель может быть создана из атрибутов ORM-объектов SQLAlchemy
@@ -29,6 +31,8 @@ class ReviewsUser(ReviewBase):
     brand: Optional[str] = None  # Добавляем название бренда
     # средний рейтинг отзыва, значение оценки, от 0 до 10 с 4 знаками после запятой
     average_rating_review: condecimal(ge=0, le=10, decimal_places=4)
+    # дата и время создания отзыва
+    created_at: int
     # Внутренний класс Config для настройки модели
     class Config:
         # Указываем, что модель может быть создана из атрибутов ORM-объектов SQLAlchemy

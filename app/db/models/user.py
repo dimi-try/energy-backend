@@ -1,9 +1,9 @@
-# Импортируем Column, Integer, String, Boolean, TIMESTAMP из SQLAlchemy
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, BigInteger  # Добавляем BigInteger
+# Импортируем нужное SQLAlchemy
+from sqlalchemy import Column, Integer, String, Boolean, BigInteger  # Добавляем BigInteger
 # Импортируем relationship для определения связей
 from sqlalchemy.orm import relationship
-# Импортируем datetime для установки значений по умолчанию
-from datetime import datetime
+# Импортируем time для работы с временными метками
+import time
 # Импортируем базовый класс
 from app.db.models.base import Base
 
@@ -19,7 +19,7 @@ class User(Base):
     # Определяем поле is_premium как булево
     is_premium = Column(Boolean, default=False)
     # Определяем поле created_at с текущей датой по умолчанию
-    created_at = Column(TIMESTAMP, default=datetime.utcnow)
+    created_at = Column(BigInteger, default=lambda: int(time.time()))  # Unix timestamp в секундах
     # Поле для URL фото
     image_url = Column(String(255), nullable=True)
 

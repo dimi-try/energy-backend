@@ -2,7 +2,8 @@ import os
 import csv
 import random #для рандома описания и разных выборов
 import string  #для генерации описания
-from datetime import datetime
+import time
+from datetime import datetime, timezone
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from alembic.config import Config
@@ -84,7 +85,7 @@ def seed_data():
             User(
                 username="test_user_1",
                 is_premium=False,
-                created_at=datetime.now()
+                created_at=int(time.time())  # Unix timestamp в UTC
             )
         ]
         db.add_all(users)
@@ -135,13 +136,17 @@ def seed_data():
                 db.add(energy)
                 db.commit()
 
+                # Преобразуем дату из CSV в Unix timestamp
+                date_obj = datetime.strptime(row["date"], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                timestamp = int(date_obj.timestamp())  # UTC timestamp
+
                 # Создаем отзывы
                 reviews = [
                     Review(  # Обязательный отзыв от первого пользователя
                         user_id=users[0].id,
                         energy_id=energy.id,
                         review_text=row["description"],
-                        created_at=datetime.strptime(row["date"], "%Y-%m-%d")
+                        created_at=timestamp  # Unix timestamp
                     )
                 ]
 

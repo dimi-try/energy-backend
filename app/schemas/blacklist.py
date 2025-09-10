@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
 from app.schemas.base import BlacklistBase
 
 # =============== ONLY ADMINS ===============
@@ -14,7 +13,7 @@ class BlacklistCreate(BlacklistBase):
 class Blacklist(BlacklistBase):
     id: int
     # когда создан
-    created_at: datetime
+    created_at: int
     # Имя пользователя для отображения
     username: Optional[str] = None
 

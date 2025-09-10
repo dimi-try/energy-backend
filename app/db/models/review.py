@@ -1,9 +1,9 @@
-# Импортируем Column, Integer, ForeignKey, Text, TIMESTAMP из SQLAlchemy
-from sqlalchemy import Column, Integer, ForeignKey, Text, TIMESTAMP, BigInteger, String
+# Импортируем нужное из SQLAlchemy
+from sqlalchemy import Column, Integer, ForeignKey, Text, BigInteger, String
 # Импортируем relationship для определения связей
 from sqlalchemy.orm import relationship
-# Импортируем datetime для установки значений по умолчанию
-from datetime import datetime
+# Импортируем time для работы с временными метками
+import time
 # Импортируем базовый класс
 from app.db.models.base import Base
 
@@ -21,7 +21,7 @@ class Review(Base):
     # Определяем поле review_text как текстовое
     review_text = Column(Text, nullable=True)
     # Определяем поле created_at с текущей датой по умолчанию
-    created_at = Column(TIMESTAMP, default=datetime.utcnow)
+    created_at = Column(BigInteger, default=lambda: int(time.time()))  # Unix timestamp в секундах
     # Поле для URL фото
     image_url = Column(String(255), nullable=True)
 
