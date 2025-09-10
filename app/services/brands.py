@@ -191,7 +191,7 @@ def get_brands_admin(db: Session, skip: int = 0, limit: int = 10, search: str = 
         search = search.lower()
         query = query.filter(func.lower(Brand.name).like(f"%{search}%"))
     
-    query = query.offset(skip).limit(limit)
+    query = query.order_by(Brand.name).offset(skip).limit(limit)
     return query.all()
 
 # =============== UPDATE ===============
@@ -231,7 +231,7 @@ def get_brands_admin_select(db: Session):
     """
     Получает список всех брендов для выбора бренда при создании или изменении энергетика.
     """
-    query = db.query(Brand)
+    query = db.query(Brand).order_by(Brand.name)
     return query.all()
 
 # =============== READ TOTAL BRANDS COUNT FOR ADMIN ===============
