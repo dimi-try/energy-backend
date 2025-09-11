@@ -57,11 +57,8 @@ def get_user_profile_endpoint(
 ):
     """
     Эндпоинт для получения профиля пользователя, включая статистику по оценкам.
-    Доступен только самому пользователю или администраторам.
+    Доступен всем авторизованным пользователям.
     """
-    # Проверяем, что пользователь запрашивает свой профиль
-    if current_user["user_id"] != user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to access this profile")
     # Вызываем функцию для получения профиля пользователя
     profile = get_user_profile(db, user_id=user_id)
     # Проверяем, существует ли профиль
@@ -111,17 +108,14 @@ def get_user_reviews_endpoint(
 ):
     """
     Эндпоинт для получения отзывов пользователя.
-    Доступен только самому пользователю или администраторам.
+    Доступен всем авторизованным пользователям.
     """
-    # Проверяем, что пользователь запрашивает свои отзывы
-    if current_user["user_id"] != user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to access these reviews")
     # Вызываем функцию для получения отзывов пользователя
     reviews = get_user_reviews(db, user_id=user_id, skip=offset, limit=limit)
     # Проверяем, существуют ли отзывы
     if not reviews:
-        # Вызываем исключение, если отзывы не найдены
-        raise HTTPException(status_code=404, detail="Reviews not found")
+        # Возвращаем пустой список отзывов вместо ошибки
+        return {"reviews": []}
     # Возвращаем отзывы пользователя
     return reviews
 
@@ -134,10 +128,8 @@ def get_total_reviews_endpoint(
 ):
     """
     Эндпоинт для получения общего количества отзывов пользователя.
-    Доступен только самому пользователю или администраторам.
+    Доступен всем авторизованным пользователям.
     """
-    if current_user["user_id"] != user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to access these reviews")
     return {"total": get_total_reviews(db, user_id=user_id)}
 
 # =============== READ OWN ROLE ===============

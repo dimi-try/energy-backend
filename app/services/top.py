@@ -149,8 +149,13 @@ def get_top_brands(db: Session, limit: int = 10, offset: int = 0):
         .outerjoin(Rating, Review.id == Rating.review_id)
         # Группируем по id бренда
         .group_by(Brand.id)
-        # Сортируем по рейтингу
-        .order_by(desc("average_rating"))
+        # Сортируем
+        .order_by(
+            # По рейтингу
+            desc("average_rating"),
+            # По названию бренда
+            Brand.name
+        )
         # Ограничиваем записи
         .offset(offset)  # Добавляем смещение
         .limit(limit)    # Ограничиваем количество записей

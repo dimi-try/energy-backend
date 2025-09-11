@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field, condecimal
 from typing import Optional, List
-from datetime import datetime
 
 # Базовая модель для оценок, содержит общие поля
 class RatingBase(BaseModel):
@@ -20,8 +19,6 @@ class ReviewBase(BaseModel):
     review_text: Optional[str] = None
     # URL изображения отзыва, необязательное
     image_url: Optional[str] = None
-    # дата и время создания отзыва
-    created_at: datetime
     # список объектов оценок, связанных с отзывом
     ratings: List[Rating]
 
