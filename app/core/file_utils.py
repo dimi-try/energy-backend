@@ -3,7 +3,7 @@ import uuid
 from fastapi import HTTPException, status, UploadFile
 from PIL import Image
 import io
-from config import UPLOAD_DIR_ENERGY, UPLOAD_DIR_REVIEW, UPLOAD_DIR_USER, ALLOWED_EXTENSIONS, MAX_FILE_SIZE
+from app.core.config import UPLOAD_DIR_ENERGY, UPLOAD_DIR_REVIEW, UPLOAD_DIR_USER, ALLOWED_EXTENSIONS, MAX_FILE_SIZE
 
 # Создание директорий
 os.makedirs(UPLOAD_DIR_ENERGY, exist_ok=True)
