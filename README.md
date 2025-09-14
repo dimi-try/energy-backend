@@ -218,7 +218,7 @@ find / -type d -name "image-backup" 2>/dev/null
 
 👉 Windows (PowerShell):
 ```
-scp -r C:\Users\USER\Downloads\image-backup\ user@server:/image-backup/
+scp -r "C:\Users\USER\Downloads\image-backup\*" user@server:/image-backup/
 ```
 
 👉 Linux/macOS:

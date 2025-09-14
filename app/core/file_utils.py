@@ -16,12 +16,12 @@ def validate_file(file: UploadFile):
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Недопустимый формат файла. Разрешены: JPG, JPEG, PNG, HEIC, HEIF"
+            detail="Недопустимый формат файла. Разрешены: JPG, JPEG, PNG, HEIF"
         )
     if file.size > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Файл слишком большой. Максимальный размер: {MAX_FILE_SIZE // (1024 * 1024)} МБ"
+            detail="Файл слишком большой. Максимальный размер: 10 МБ"
         )
     try:
         img = Image.open(file.file)
@@ -46,8 +46,8 @@ async def upload_file(file: UploadFile, upload_dir: str):
         
         if ext in [".jpg", ".jpeg"]:
             # Сохраняем JPEG без метаданных
-            img.save(output, format="JPEG", quality=95, exif=b"")
-        elif ext in [".heic", ".heif"]:
+            img.save(output, format="JPEG", quality=100, exif=b"")
+        elif ext in [".heif"]:
             # Сохраняем HEIC/HEIF без метаданных
             img.save(output, format="HEIF")
         else:
