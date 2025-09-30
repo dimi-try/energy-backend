@@ -1,199 +1,306 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc, distinct
+from sqlalchemy import func, desc, distinct, or_
+from sqlalchemy.sql.expression import func as sql_func
 
 from app.db.models import Energy, Review, Rating, Brand
-
 from app.schemas.top import EnergyTop, BrandTop
 
 # =============== READ ENERGY CHART ===============
-def get_top_energies(db: Session, limit: int = 10, offset: int = 0):
-    # Создаём подзапрос для среднего рейтинга
+def get_top_energies(
+    db: Session,
+    limit: int = 10,
+    offset: int = 0,
+    search_query: str = None,
+    min_rating: float = None,
+    max_rating: float = None
+):
+    # Подзапрос для среднего рейтинга
     avg_rating_subquery = (
-        # Начинаем запрос с таблицы Review
         db.query(
-            # Выбираем energy_id
             Review.energy_id,
-            # Вычисляем средний рейтинг
             func.round(func.avg(Rating.rating_value), 4).label('avg_rating')
         )
-        # Присоединяем таблицу Rating
         .join(Rating)
-        # Группируем по energy_id
         .group_by(Review.energy_id)
-        # Преобразуем в подзапрос
         .subquery()
     )
 
-    # Создаём подзапрос для количества отзывов
+    # Подзапрос для количества отзывов
     review_count_subquery = (
-        # Начинаем запрос с таблицы Review
         db.query(
-            # Выбираем energy_id
             Review.energy_id,
-            # Считаем отзывы
             func.count(Review.id).label('review_count')
         )
-        # Группируем по energy_id
         .group_by(Review.energy_id)
-        # Преобразуем в подзапрос
         .subquery()
     )
 
-    # Выполняем запрос для топа энергетиков
-    energies = (
-        # Начинаем запрос с таблицы Energy
+    # Подзапрос для вычисления абсолютного ранга (без фильтров)
+    absolute_rank_subquery = (
         db.query(
-            # Выбираем объект Energy
-            Energy,
-            # Устанавливаем средний рейтинг
-            func.coalesce(avg_rating_subquery.c.avg_rating, 0).label('average_rating'),
-            # Устанавливаем количество отзывов
-            func.coalesce(review_count_subquery.c.review_count, 0).label('review_count')
+            Energy.id.label('energy_id'),
+            sql_func.row_number().over(
+                order_by=[
+                    desc(func.coalesce(
+                        db.query(func.avg(Rating.rating_value))
+                        .join(Review)
+                        .filter(Review.energy_id == Energy.id)
+                        .scalar_subquery(), 0
+                    )),
+                    desc(func.count(Review.id)),
+                    Brand.name,
+                    Energy.name
+                ]
+            ).label('absolute_rank')
         )
-        # Левое соединение с подзапросом рейтинга
-        .outerjoin(avg_rating_subquery, Energy.id == avg_rating_subquery.c.energy_id)
-        # Левое соединение с подзапросом отзывов
-        .outerjoin(review_count_subquery, Energy.id == review_count_subquery.c.energy_id)
-        # Присоединяем таблицу Brand
         .join(Brand)
-        # Сортируем результаты
+        .outerjoin(Review, Energy.id == Review.energy_id)
+        .outerjoin(Rating, Review.id == Rating.review_id)
+        .group_by(Energy.id, Brand.name)
+        .subquery()
+    )
+
+    # Основной запрос
+    query = (
+        db.query(
+            Energy,
+            func.coalesce(avg_rating_subquery.c.avg_rating, 0).label('average_rating'),
+            func.coalesce(review_count_subquery.c.review_count, 0).label('review_count'),
+            absolute_rank_subquery.c.absolute_rank
+        )
+        .outerjoin(avg_rating_subquery, Energy.id == avg_rating_subquery.c.energy_id)
+        .outerjoin(review_count_subquery, Energy.id == review_count_subquery.c.energy_id)
+        .outerjoin(absolute_rank_subquery, Energy.id == absolute_rank_subquery.c.energy_id)
+        .join(Brand)
+    )
+
+    # Применяем фильтры
+    if search_query:
+        search_terms = search_query.lower().split()
+        for term in search_terms:
+            search_pattern = f"%{term}%"
+            query = query.filter(
+                or_(
+                    func.lower(Energy.name).like(search_pattern),
+                    func.lower(Brand.name).like(search_pattern)
+                )
+            )
+
+    if min_rating is not None:
+        query = query.filter(avg_rating_subquery.c.avg_rating >= min_rating)
+    if max_rating is not None:
+        query = query.filter(avg_rating_subquery.c.avg_rating <= max_rating)
+
+    # Сортировка и пагинация
+    energies = (
+        query
         .order_by(
-            # По рейтингу
-            desc('average_rating'),
-            # По количеству отзывов
+            desc('average_rating'),  # Сортировка по среднему рейтингу
             desc('review_count'),
-            # По названию бренда
             Brand.name,
-            # По названию энергетика
             Energy.name
         )
-        # Ограничиваем записи
-        .offset(offset)  # Добавляем смещение
-        .limit(limit)    # Ограничиваем количество записей
-        # Получаем результаты
+        .offset(offset)
+        .limit(limit)
         .all()
     )
 
-    # Преобразуем результаты
     return [{
-        # Устанавливаем id
         "id": energy.id,
-        # Устанавливаем название
         "name": energy.name,
-        # Устанавливаем рейтинг
         "average_rating": float(avg_rating),
-        # Устанавливаем бренд
         "brand": energy.brand,
-        # Устанавливаем категорию
         "category": energy.category,
-        # Устанавливаем изображение
         "image_url": energy.image_url,
-        # Устанавливаем количество отзывов
-        "review_count": review_count
-    } for energy, avg_rating, review_count in energies]
+        "review_count": review_count,
+        "absolute_rank": absolute_rank
+    } for energy, avg_rating, review_count, absolute_rank in energies]
 
 # =============== READ BRAND CHART ===============
-def get_top_brands(db: Session, limit: int = 10, offset: int = 0):
-    """
-    Получает топ брендов с:
-    - Средним рейтингом (правильный расчет)
-    - Количеством энергетиков
-    - Количеством отзывов
-    - Количеством оценок
-    - Сортировкой по рейтингу
-    Используется в эндпоинте GET /top/brands/, доступном всем пользователям.
-    """
-    # Создаём подзапрос для рейтингов
+def get_top_brands(
+    db: Session,
+    limit: int = 10,
+    offset: int = 0,
+    search_query: str = None,
+    min_rating: float = None,
+    max_rating: float = None
+):
+    # Подзапрос для среднего рейтинга энергетиков бренда
     energy_avg_subquery = (
-        # Начинаем запрос с таблицы Energy
         db.query(
-            # Выбираем brand_id
             Energy.brand_id,
-            # Вычисляем средний рейтинг
             func.avg(Rating.rating_value).label("energy_avg_rating"),
         )
-        # Левое соединение с таблицей Review
         .outerjoin(Review, Energy.id == Review.energy_id)
-        # Левое соединение с таблицей Rating
         .outerjoin(Rating, Review.id == Rating.review_id)
-        # Группируем по id энергетика
         .group_by(Energy.id)
-        # Преобразуем в подзапрос
         .subquery()
     )
 
-    # Выполняем запрос для топа брендов
-    results = (
-        # Начинаем запрос с таблицы Brand
+    # Подзапрос для абсолютного ранга (без фильтров)
+    absolute_rank_subquery = (
         db.query(
-            # Выбираем id бренда
-            Brand.id,
-            # Выбираем название бренда
-            Brand.name,
-            # Вычисляем средний рейтинг
-            func.coalesce(func.round(func.avg(energy_avg_subquery.c.energy_avg_rating), 4), 0).label("average_rating"),
-            # Считаем количество энергетиков
-            func.count(distinct(Energy.id)).label("energy_count"),
-            # Считаем количество отзывов
-            func.count(distinct(Review.id)).label("review_count"),
-            # Считаем количество оценок
-            func.count(distinct(Rating.id)).label("rating_count"),
+            Brand.id.label('brand_id'),
+            sql_func.row_number().over(
+                order_by=[
+                    desc(func.coalesce(
+                        db.query(func.avg(Rating.rating_value))
+                        .join(Review)
+                        .join(Energy)
+                        .filter(Energy.brand_id == Brand.id)
+                        .scalar_subquery(), 0
+                    )),
+                    Brand.name
+                ]
+            ).label('absolute_rank')
         )
-        # Левое соединение с таблицей Energy
         .outerjoin(Energy, Brand.id == Energy.brand_id)
-        # Левое соединение с подзапросом
-        .outerjoin(energy_avg_subquery, Brand.id == energy_avg_subquery.c.brand_id)
-        # Левое соединение с таблицей Review
         .outerjoin(Review, Energy.id == Review.energy_id)
-        # Левое соединение с таблицей Rating
         .outerjoin(Rating, Review.id == Rating.review_id)
-        # Группируем по id бренда
         .group_by(Brand.id)
-        # Сортируем
+        .subquery()
+    )
+
+    # Основной запрос
+    query = (
+        db.query(
+            Brand.id,
+            Brand.name,
+            func.coalesce(
+                func.round(func.avg(energy_avg_subquery.c.energy_avg_rating), 4), 0
+            ).label("average_rating"),
+            func.count(distinct(Energy.id)).label("energy_count"),
+            func.count(distinct(Review.id)).label("review_count"),
+            func.count(distinct(Rating.id)).label("rating_count"),
+            absolute_rank_subquery.c.absolute_rank
+        )
+        .outerjoin(Energy, Brand.id == Energy.brand_id)
+        .outerjoin(energy_avg_subquery, Brand.id == energy_avg_subquery.c.brand_id)
+        .outerjoin(Review, Energy.id == Review.energy_id)
+        .outerjoin(Rating, Review.id == Rating.review_id)
+        .outerjoin(absolute_rank_subquery, Brand.id == absolute_rank_subquery.c.brand_id)
+    )
+
+    # Применяем фильтры
+    if search_query:
+        search_terms = search_query.lower().split()
+        for term in search_terms:
+            search_pattern = f"%{term}%"
+            query = query.filter(func.lower(Brand.name).like(search_pattern))
+
+    # Фильтр по среднему рейтингу бренда (average_rating)
+    if min_rating is not None:
+        query = query.having(
+            func.coalesce(
+                func.round(func.avg(energy_avg_subquery.c.energy_avg_rating), 4), 0
+            ) >= min_rating
+        )
+    if max_rating is not None:
+        query = query.having(
+            func.coalesce(
+                func.round(func.avg(energy_avg_subquery.c.energy_avg_rating), 4), 0
+            ) <= max_rating
+        )
+
+    # Группировка, сортировка и пагинация
+    results = (
+        query
+        .group_by(Brand.id, absolute_rank_subquery.c.absolute_rank)
         .order_by(
-            # По рейтингу
-            desc("average_rating"),
-            # По названию бренда
+            desc("average_rating"),  # Сортировка по среднему рейтингу
             Brand.name
         )
-        # Ограничиваем записи
-        .offset(offset)  # Добавляем смещение
-        .limit(limit)    # Ограничиваем количество записей
-        # Получаем результаты
+        .offset(offset)
+        .limit(limit)
         .all()
     )
 
-    # Преобразуем результаты
     return [
-        # Создаём словарь для бренда
         {
-            # Устанавливаем id
             "id": brand_id,
-            # Устанавливаем название
             "name": name,
-            # Устанавливаем рейтинг
             "average_rating": float(average_rating),
-            # Устанавливаем количество энергетиков
             "energy_count": energy_count,
-            # Устанавливаем количество отзывов
             "review_count": review_count,
-            # Устанавливаем количество оценок
             "rating_count": rating_count,
+            "absolute_rank": absolute_rank
         }
-        # Проходим по результатам
-        for brand_id, name, average_rating, energy_count, review_count, rating_count in results
+        for brand_id, name, average_rating, energy_count, review_count, rating_count, absolute_rank in results
     ]
 
 # =============== READ TOTAL ENERGY COUNT ===============
-def get_total_energies(db: Session):
-    """
-    Возвращает общее количество энергетиков.
-    """
-    return db.query(Energy).count()
+def get_total_energies(db: Session, search_query: str = None, min_rating: float = None, max_rating: float = None):
+    avg_rating_subquery = (
+        db.query(
+            Review.energy_id,
+            func.round(func.avg(Rating.rating_value), 4).label('avg_rating')
+        )
+        .join(Rating)
+        .group_by(Review.energy_id)
+        .subquery()
+    )
+
+    query = (
+        db.query(Energy)
+        .join(Brand)
+        .outerjoin(avg_rating_subquery, Energy.id == avg_rating_subquery.c.energy_id)
+    )
+
+    if search_query:
+        search_terms = search_query.lower().split()
+        for term in search_terms:
+            search_pattern = f"%{term}%"
+            query = query.filter(
+                or_(
+                    func.lower(Energy.name).like(search_pattern),
+                    func.lower(Brand.name).like(search_pattern)
+                )
+            )
+
+    if min_rating is not None:
+        query = query.filter(avg_rating_subquery.c.avg_rating >= min_rating)
+    if max_rating is not None:
+        query = query.filter(avg_rating_subquery.c.avg_rating <= max_rating)
+
+    return query.count()
 
 # =============== READ TOTAL BRAND COUNT ===============
-def get_total_brands(db: Session):
-    """
-    Возвращает общее количество брендов.
-    """
-    return db.query(Brand).count()
+def get_total_brands(db: Session, search_query: str = None, min_rating: float = None, max_rating: float = None):
+    energy_avg_subquery = (
+        db.query(
+            Energy.brand_id,
+            func.avg(Rating.rating_value).label("energy_avg_rating"),
+        )
+        .outerjoin(Review, Energy.id == Review.energy_id)
+        .outerjoin(Rating, Review.id == Rating.review_id)
+        .group_by(Energy.id)
+        .subquery()
+    )
+
+    query = (
+        db.query(Brand)
+        .outerjoin(Energy, Brand.id == Energy.brand_id)
+        .outerjoin(energy_avg_subquery, Brand.id == energy_avg_subquery.c.brand_id)
+    )
+
+    if search_query:
+        search_terms = search_query.lower().split()
+        for term in search_terms:
+            search_pattern = f"%{term}%"
+            query = query.filter(func.lower(Brand.name).like(search_pattern))
+
+    # Фильтр по среднему рейтингу бренда для подсчета
+    if min_rating is not None:
+        query = query.having(
+            func.coalesce(
+                func.round(func.avg(energy_avg_subquery.c.energy_avg_rating), 4), 0
+            ) >= min_rating
+        )
+    if max_rating is not None:
+        query = query.having(
+            func.coalesce(
+                func.round(func.avg(energy_avg_subquery.c.energy_avg_rating), 4), 0
+            ) <= max_rating
+        )
+
+    return query.group_by(Brand.id).count()

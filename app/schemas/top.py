@@ -20,6 +20,8 @@ class EnergyTop(BaseModel):
     image_url: Optional[str] = None
     # общее количество отзывов на энергетик
     review_count: int
+    # Абсолютная позиция в топе без фильтров
+    absolute_rank: int
     # Внутренний класс Config для настройки модели
     class Config:
         # Указываем, что модель может быть создана из атрибутов ORM-объектов SQLAlchemy
@@ -39,3 +41,7 @@ class BrandTop(BaseModel):
     review_count: Optional[int] = None
     # количество оценок на энергетики бренда, необязательное
     rating_count: Optional[int] = None
+    # Абсолютная позиция в топе без фильтров
+    absolute_rank: int
+    class Config:
+        from_attributes = True
