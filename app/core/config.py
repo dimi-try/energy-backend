@@ -19,6 +19,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # =============== Админ-панель ===============
 TG_ADMIN_IDS = os.getenv("TG_ADMIN_IDS", "").split(",")
+GENERIC_USER_ID = os.getenv("GENERIC_USER_ID")
 
 # =============== Разрешенные для CORS адреса ===============
 FRONTEND_URL = os.getenv("FRONTEND_URL")

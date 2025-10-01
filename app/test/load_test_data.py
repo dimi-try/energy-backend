@@ -11,7 +11,7 @@ from alembic import command
 from decimal import Decimal, ROUND_HALF_UP #для округления
 
 from app.db.models import *  # Импорт моделей SQLAlchemy
-from app.core.config import DATABASE_URL
+from app.core.config import DATABASE_URL, GENERIC_USER_ID
 
 # Конфигурация
 engine = create_engine(DATABASE_URL)
@@ -83,8 +83,9 @@ def seed_data():
         # 3.1 Пользователи
         users = [
             User(
-                username="test_user_1",
-                is_premium=False,
+                id=GENERIC_USER_ID,          # Пользователь по умолчанию из .env
+                username="Повелитель энов",
+                is_premium=True,
                 created_at=int(time.time())  # Unix timestamp в UTC
             )
         ]
