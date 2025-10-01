@@ -113,7 +113,7 @@ def seed_data():
 
         # 3.4 Бренды и энергетики
         brands = {}
-        with open("test_data.csv", "r", encoding="utf-8") as f:
+        with open("data.csv", "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 # Создаем бренд, если его нет
