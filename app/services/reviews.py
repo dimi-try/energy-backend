@@ -63,16 +63,14 @@ def update_review(db: Session, review_id: int, review_update: ReviewUpdate):
     db_review = db.query(Review).filter(Review.id == review_id).first()
     if not db_review:
         return None
-    # Обновляем текст отзыва, если предоставлен
-    if review_update.review_text is not None:
-        db_review.review_text = review_update.review_text
-    # Обновляем URL изображения, если предоставлен
-    if review_update.image_url is not None:
-        if db_review.image_url and os.path.exists(db_review.image_url):
-            os.remove(db_review.image_url)  # Удаляем старый файл
-        db_review.image_url = review_update.image_url
+    # Получаем только переданные поля
+    update_data = review_update.dict(exclude_unset=True)
+    # Обновляем текст отзыва и image_url, если они переданы
+    for key, value in update_data.items():
+        if key != "ratings":  # Обрабатываем ratings отдельно
+            setattr(db_review, key, value)
     # Обновляем оценки, если предоставлены
-    if review_update.ratings:
+    if "ratings" in update_data and review_update.ratings:
         # Удаляем существующие оценки
         db.query(Rating).filter(Rating.review_id == review_id).delete()
         # Добавляем новые оценки
