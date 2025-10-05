@@ -148,17 +148,16 @@ def get_top_brands(
             sql_func.row_number().over(
                 order_by=[
                     desc(func.coalesce(
-                        db.query(func.avg(Rating.rating_value))
-                        .join(Review)
-                        .join(Energy)
-                        .filter(Energy.brand_id == Brand.id)
-                        .scalar_subquery(), 0
-                    )),
-                    Brand.name
+                        func.avg(energy_avg_subquery.c.energy_avg_rating), 0
+                    )),  # Используем тот же подзапрос для среднего рейтинга
+                    desc(func.count(distinct(Energy.id))),  # Сортировка по количеству энергетиков
+                    desc(func.count(distinct(Review.id))),  # Сортировка по количеству отзывов
+                    Brand.name  # Сортировка по названию бренда
                 ]
             ).label('absolute_rank')
         )
         .outerjoin(Energy, Brand.id == Energy.brand_id)
+        .outerjoin(energy_avg_subquery, Brand.id == energy_avg_subquery.c.brand_id)
         .outerjoin(Review, Energy.id == Review.energy_id)
         .outerjoin(Rating, Review.id == Rating.review_id)
         .group_by(Brand.id)
