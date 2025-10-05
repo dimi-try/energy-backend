@@ -95,8 +95,12 @@ def get_top_energies(
     energies = (
         query
         .order_by(
-            desc('average_rating'),  # Сортировка по среднему рейтингу
-            desc('review_count'),
+            desc(func.coalesce(
+                avg_rating_subquery.c.avg_rating, 0
+            )),  # Сортировка по числовому значению среднего рейтинга
+            desc(func.coalesce(
+                review_count_subquery.c.review_count, 0
+            )),  # Сортировка по числовому значению количества отзывов
             Brand.name,
             Energy.name
         )
@@ -207,8 +211,12 @@ def get_top_brands(
         query
         .group_by(Brand.id, absolute_rank_subquery.c.absolute_rank)
         .order_by(
-            desc("average_rating"),  # Сортировка по среднему рейтингу
-            Brand.name
+            desc(func.coalesce(
+                func.avg(energy_avg_subquery.c.energy_avg_rating), 0
+            )),  # 1. По среднему рейтингу (по убыванию)
+            desc(func.count(distinct(Energy.id))),  # 2. По количеству энергетиков (по убыванию)
+            desc(func.count(distinct(Review.id))),  # 3. По количеству отзывов (по убыванию)
+            Brand.name  # 4. По названию бренда (по возрастанию)
         )
         .offset(offset)
         .limit(limit)
