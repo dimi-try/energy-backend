@@ -41,22 +41,17 @@ def get_top_energies(
             Energy.id.label('energy_id'),
             sql_func.row_number().over(
                 order_by=[
-                    desc(func.coalesce(
-                        db.query(func.avg(Rating.rating_value))
-                        .join(Review)
-                        .filter(Review.energy_id == Energy.id)
-                        .scalar_subquery(), 0
-                    )),
-                    desc(func.count(Review.id)),
+                    desc(func.coalesce(avg_rating_subquery.c.avg_rating, 0)),
+                    desc(func.coalesce(review_count_subquery.c.review_count, 0)),
                     Brand.name,
                     Energy.name
                 ]
             ).label('absolute_rank')
         )
         .join(Brand)
-        .outerjoin(Review, Energy.id == Review.energy_id)
-        .outerjoin(Rating, Review.id == Rating.review_id)
-        .group_by(Energy.id, Brand.name)
+        .outerjoin(avg_rating_subquery, Energy.id == avg_rating_subquery.c.energy_id)
+        .outerjoin(review_count_subquery, Energy.id == review_count_subquery.c.energy_id)
+        .group_by(Energy.id, Brand.name, avg_rating_subquery.c.avg_rating, review_count_subquery.c.review_count)
         .subquery()
     )
 
@@ -148,17 +143,16 @@ def get_top_brands(
             sql_func.row_number().over(
                 order_by=[
                     desc(func.coalesce(
-                        db.query(func.avg(Rating.rating_value))
-                        .join(Review)
-                        .join(Energy)
-                        .filter(Energy.brand_id == Brand.id)
-                        .scalar_subquery(), 0
-                    )),
-                    Brand.name
+                        func.avg(energy_avg_subquery.c.energy_avg_rating), 0
+                    )),  # Используем тот же подзапрос для среднего рейтинга
+                    desc(func.count(distinct(Energy.id))),  # Сортировка по количеству энергетиков
+                    desc(func.count(distinct(Review.id))),  # Сортировка по количеству отзывов
+                    Brand.name  # Сортировка по названию бренда
                 ]
             ).label('absolute_rank')
         )
         .outerjoin(Energy, Brand.id == Energy.brand_id)
+        .outerjoin(energy_avg_subquery, Brand.id == energy_avg_subquery.c.brand_id)
         .outerjoin(Review, Energy.id == Review.energy_id)
         .outerjoin(Rating, Review.id == Rating.review_id)
         .group_by(Brand.id)
