@@ -254,7 +254,7 @@ mkdir -p /image-backup-tar
 
 👉 Windows (PowerShell):
 ```
-scp C:\Users\USER\Downloads\uploads-backup.tar.gz user@server:/image-backup-tar/
+scp C:\Users\USER\Downloads\image-backup-tar\uploads-backup.tar.gz user@server:/image-backup-tar/
 ```
 
 👉 Linux/macOS:
