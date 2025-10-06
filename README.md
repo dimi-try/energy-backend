@@ -186,23 +186,29 @@ find / -type d -name "image-backup" 2>/dev/null
 docker cp energy-backend-1:/app/uploads /image-backup/
 ```
 
-3️⃣ Скопировать с сервера на локальную машину
+3️⃣ Создать архив с изображениями
+```
+tar -czf /image-backup/uploads-backup.tar.gz -C /image-backup/uploads .
+```
 
-👉 Linux/macOS:
-```
-scp -r user@server:/image-backup/ ~/Downloads/
-```
+4️⃣ Скопировать архив с сервера на локальную машину
 
 👉 Windows (PowerShell):
 ```
 scp -r user@server:/image-backup/ C:\Users\USER\Downloads\
 ```
 
-4️⃣ Очистить временную папку на сервере
+👉 Linux/macOS:
+```
+scp -r user@server:/image-backup/ ~/Downloads/
+```
+
+5️⃣ Очистить временную папку на сервере
 ```
 rm -rf /image-backup/
 ```
-5️⃣ Проверить, осталась ли папка на сервере
+
+6️⃣ Проверить, осталась ли папка на сервере
 ```
 find / -type d -name "image-backup" 2>/dev/null
 ```
@@ -214,27 +220,35 @@ find / -type d -name "image-backup" 2>/dev/null
 ```
 find / -type d -name "image-backup" 2>/dev/null
 ```
+
 2️⃣ Скопировать изображения с локалки на сервер
 
 👉 Windows (PowerShell):
 ```
-scp -r "C:\Users\USER\Downloads\image-backup\*" user@server:/image-backup/
+scp C:\Users\USER\Downloads\image-backup\uploads-backup.tar.gz user@server:/image-backup/
 ```
 
 👉 Linux/macOS:
 ```
-scp -r ~/Downloads/image-backup/ user@server:/image-backup/
+scp ~/Downloads/image-backup/uploads-backup.tar.gz user@server:/image-backup/
 ```
 
-3️⃣ Перенести изображения с сервера в контейнер
+3️⃣ Распаковать архив на сервере
 ```
-docker cp /image-backup/. energy-backend-1:/app/uploads
+tar -xzf /image-backup/uploads-backup.tar.gz -C /image-backup/uploads
 ```
-4️⃣ Очистить временную папку на сервере
+
+4️⃣ Перенести изображения с сервера в контейнер
+```
+docker cp /image-backup/uploads/. energy-backend-1:/app/uploads
+```
+
+5️⃣ Очистить временную папку на сервере
 ```
 rm -rf /image-backup/
 ```
-5️⃣ Проверить, осталась ли папка на сервере
+
+6️⃣ Проверить, осталась ли папка на сервере
 ```
 find / -type d -name "image-backup" 2>/dev/null
 ```
@@ -250,25 +264,21 @@ find / -type f -name "*energy_drink*" 2>/dev/null
 ```
 
 2️⃣ Заходим в контейнер с PostgreSQL:
-
 ```
 docker exec -it energy-postgres-1 bash
 ```
 
 3️⃣ Делаем дамп базы:
-
 ```
 pg_dump -U postgres -d energy_drinks_db -Fc > /tmp/energy_drinks_db_backup.dump
 ```
 
 4️⃣ Выходим из контейнера:
-
 ```
 exit
 ```
 
 5️⃣ Копируем дамп из контейнера на сервер:
-
 ```
 docker cp energy-postgres-1:/tmp/energy_drinks_db_backup.dump ./energy_drinks_db_backup.dump
 ```
@@ -302,6 +312,16 @@ docker exec -it energy-postgres-1 bash
 rm /tmp/energy_drinks_db_backup.dump
 ```
 
+8️⃣ Выходим из контейнера:
+```
+exit
+```
+
+9️⃣ Проверить, существует ли бэкап еще на сервере
+```
+find / -type d -name "image-backup" 2>/dev/null
+```
+
 ---
 
 ### 📥 Восстановление из резервной копии
@@ -326,7 +346,6 @@ scp -r ~/Downloads/energy_drinks_db_backup.dump user@server:./energy_drinks_db_b
 ```
 
 3️⃣ Копируем дамп в контейнер:
-
 ```
 docker cp ./energy_drinks_db_backup.dump energy-postgres-1:/tmp/energy_drinks_db_backup.dump
 ```
@@ -355,6 +374,11 @@ docker exec -it energy-postgres-1 psql -U postgres -c "CREATE DATABASE energy_dr
 
 ```
 docker exec -i energy-postgres-1 pg_restore -U postgres -d energy_drinks_db --verbose /tmp/energy_drinks_db_backup.dump
+```
+
+6️⃣ Проверить, существует ли бэкап еще на сервере
+```
+find / -type d -name "image-backup" 2>/dev/null
 ```
 
 ---
