@@ -176,9 +176,13 @@ python -m app.test.loader_data
 
 ### 📤 Выгрузка изображений из контейнера
 
-1️⃣ Проверить, существует ли папка с изображениями уже на сервере
+1️⃣ Проверить, существуют ли папки с изображениями уже на сервере
 ```
 find / -type d -name "image-backup" 2>/dev/null
+```
+
+```
+find / -type d -name "image-backup-tar" 2>/dev/null
 ```
 
 2️⃣ Скопировать папку uploads из контейнера на сервер
@@ -188,19 +192,23 @@ docker cp energy-backend-1:/app/uploads /image-backup/
 
 3️⃣ Создать архив с изображениями
 ```
-tar -czf /image-backup/uploads-backup.tar.gz -C /image-backup .
+mkdir -p /image-backup-tar
+```
+
+```
+tar -czf /image-backup-tar/uploads-backup.tar.gz -C /image-backup/
 ```
 
 4️⃣ Скопировать архив с сервера на локальную машину
 
 👉 Windows (PowerShell):
 ```
-scp -r user@server:/image-backup/ C:\Users\USER\Downloads\
+scp -r user@server:/image-backup-tar/ C:\Users\USER\Downloads\
 ```
 
 👉 Linux/macOS:
 ```
-scp -r user@server:/image-backup/ ~/Downloads/
+scp -r user@server:/image-backup-tar/ ~/Downloads/
 ```
 
 5️⃣ Очистить временную папку на сервере
@@ -208,15 +216,23 @@ scp -r user@server:/image-backup/ ~/Downloads/
 rm -rf /image-backup/
 ```
 
-6️⃣ Проверить, осталась ли папка на сервере
+```
+rm -rf /image-backup-tar/
+```
+
+6️⃣ Проверить, остались ли папки на сервере
 ```
 find / -type d -name "image-backup" 2>/dev/null
+```
+
+```
+find / -type d -name "image-backup-tar" 2>/dev/null
 ```
 ---
 
 ### 📥 Загрузка изображений обратно в контейнер
 
-1️⃣ Проверить, существует ли папка с изображениями уже на сервере
+1️⃣ Проверить, существуют ли папки с изображениями уже на сервере
 ```
 find / -type d -name "image-backup" 2>/dev/null
 ```
@@ -225,22 +241,22 @@ find / -type d -name "image-backup" 2>/dev/null
 
 👉 Windows (PowerShell):
 ```
-scp C:\Users\USER\Downloads\image-backup\uploads-backup.tar.gz user@server:/image-backup/
+scp C:\Users\USER\Downloads\uploads-backup.tar.gz user@server:/image-backup-tar/
 ```
 
 👉 Linux/macOS:
 ```
-scp ~/Downloads/image-backup/uploads-backup.tar.gz user@server:/image-backup/
+scp ~/Downloads/uploads-backup.tar.gz user@server:/image-backup-tar/
 ```
 
 3️⃣ Распаковать архив на сервере
 ```
-tar -xzf /image-backup/uploads-backup.tar.gz -C /image-backup/uploads
+tar -xzf /image-backup-tar/uploads-backup.tar.gz -C /image-backup/
 ```
 
 4️⃣ Перенести изображения с сервера в контейнер
 ```
-docker cp /image-backup/uploads/. energy-backend-1:/app/uploads
+docker cp /image-backup/. energy-backend-1:/app/uploads
 ```
 
 5️⃣ Очистить временную папку на сервере
@@ -248,7 +264,7 @@ docker cp /image-backup/uploads/. energy-backend-1:/app/uploads
 rm -rf /image-backup/
 ```
 
-6️⃣ Проверить, осталась ли папка на сервере
+6️⃣ Проверить, остались ли папки на сервере
 ```
 find / -type d -name "image-backup" 2>/dev/null
 ```
