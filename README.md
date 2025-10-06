@@ -188,7 +188,7 @@ docker cp energy-backend-1:/app/uploads /image-backup/
 
 3️⃣ Создать архив с изображениями
 ```
-tar -czf /image-backup/uploads-backup.tar.gz -C /image-backup/uploads .
+tar -czf /image-backup/uploads-backup.tar.gz -C /image-backup .
 ```
 
 4️⃣ Скопировать архив с сервера на локальную машину
