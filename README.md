@@ -196,7 +196,7 @@ mkdir -p /image-backup-tar
 ```
 
 ```
-tar -czf /image-backup-tar/uploads-backup.tar.gz -C /image-backup/
+tar -czf /image-backup-tar/uploads-backup.tar.gz -C /image-backup/ .
 ```
 
 4️⃣ Скопировать архив с сервера на локальную машину
@@ -237,7 +237,20 @@ find / -type d -name "image-backup-tar" 2>/dev/null
 find / -type d -name "image-backup" 2>/dev/null
 ```
 
-2️⃣ Скопировать изображения с локалки на сервер
+```
+find / -type d -name "image-backup-tar" 2>/dev/null
+```
+
+2️⃣ Создать папки с изображениями
+```
+mkdir -p /image-backup
+```
+
+```
+mkdir -p /image-backup-tar
+```
+
+3️⃣ Скопировать изображения с локалки на сервер
 
 👉 Windows (PowerShell):
 ```
@@ -249,24 +262,32 @@ scp C:\Users\USER\Downloads\uploads-backup.tar.gz user@server:/image-backup-tar/
 scp ~/Downloads/uploads-backup.tar.gz user@server:/image-backup-tar/
 ```
 
-3️⃣ Распаковать архив на сервере
+4️⃣ Распаковать архив на сервере
 ```
 tar -xzf /image-backup-tar/uploads-backup.tar.gz -C /image-backup/
 ```
 
-4️⃣ Перенести изображения с сервера в контейнер
+5️⃣ Перенести изображения с сервера в контейнер
 ```
 docker cp /image-backup/. energy-backend-1:/app/uploads
 ```
 
-5️⃣ Очистить временную папку на сервере
+6️⃣ Очистить временные папки на сервере
 ```
 rm -rf /image-backup/
 ```
 
-6️⃣ Проверить, остались ли папки на сервере
+```
+rm -rf /image-backup-tar/
+```
+
+7️⃣ Проверить, остались ли папки на сервере
 ```
 find / -type d -name "image-backup" 2>/dev/null
+```
+
+```
+find / -type d -name "image-backup-tar" 2>/dev/null
 ```
 
 ---
