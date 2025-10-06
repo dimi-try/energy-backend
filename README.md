@@ -356,7 +356,7 @@ exit
 
 9️⃣ Проверить, существует ли бэкап еще на сервере
 ```
-find / -type d -name "image-backup" 2>/dev/null
+find / -type f -name "*energy_drink*" 2>/dev/null
 ```
 
 ---
@@ -413,9 +413,29 @@ docker exec -it energy-postgres-1 psql -U postgres -c "CREATE DATABASE energy_dr
 docker exec -i energy-postgres-1 pg_restore -U postgres -d energy_drinks_db --verbose /tmp/energy_drinks_db_backup.dump
 ```
 
-6️⃣ Проверить, существует ли бэкап еще на сервере
+6️⃣ Подключаемся снова к серверу и чистим временные файлы:
+
+Удаляем бэкап на сервере:
+``` 
+rm ./energy_drinks_db_backup.dump  
+``` 
+Заходим в контейнер
+``` 
+docker exec -it energy-postgres-1 bash
 ```
-find / -type d -name "image-backup" 2>/dev/null
+Удаляем бэкап с контейнера
+```
+rm /tmp/energy_drinks_db_backup.dump
+```
+
+7️⃣ Выходим из контейнера:
+```
+exit
+```
+
+8️⃣ Проверить, существует ли бэкап еще на сервере
+```
+find / -type f -name "*energy_drink*" 2>/dev/null
 ```
 
 ---
