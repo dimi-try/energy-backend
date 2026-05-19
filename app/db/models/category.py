@@ -17,3 +17,5 @@ class Category(Base):
 
     # Связь: одна категория -> много энергетиков
     energies = relationship("Energy", back_populates="category")
+    # Связь: одна категория -> много предложок
+    suggestions = relationship("Suggestion", back_populates="category")
