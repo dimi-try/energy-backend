@@ -6,14 +6,14 @@ import uuid
 from datetime import datetime
 from sqlalchemy.orm import Session, joinedload
 
-from ..db import models
-from ..schemas.suggestions import SuggestionCreate, SuggestionUpdate, RatingItem
-from ..db.models.suggestion import SuggestionStatus
-from ..db.models.brand import Brand
-from ..db.models.energy import Energy
-from ..db.models.review import Review
-from ..db.models.rating import Rating
-from ..core.config import UPLOAD_DIR_SUGGESTION, UPLOAD_DIR_REVIEW
+from app.db import models
+from app.schemas.suggestions import SuggestionCreate, SuggestionUpdate, RatingItem
+from app.db.models.suggestion import SuggestionStatus
+from app.db.models.brand import Brand
+from app.db.models.energy import Energy
+from app.db.models.review import Review
+from app.db.models.rating import Rating
+from app.core.config import UPLOAD_DIR_SUGGESTION, UPLOAD_DIR_REVIEW
 
 
 def copy_suggestion_image_to_review(image_url: str | None) -> str | None:
