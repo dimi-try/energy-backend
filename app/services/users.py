@@ -3,6 +3,7 @@ from typing import Dict, Any
 from sqlalchemy.exc import DataError
 from fastapi import HTTPException
 import time
+import os
 
 from app.core.config import TG_ADMIN_IDS
 
@@ -74,8 +75,8 @@ def get_user_profile(db: Session, user_id: int) -> Dict[str, Any]:
         # Возвращаем None, если пользователь не найден
         return None
 
-    # Получаем отзывы пользователя
-    reviews = db.query(Review).filter(Review.user_id == user_id).all()
+    # Получаем отзывы пользователя (только к существующим энергетикам, не к предложкам)
+    reviews = db.query(Review).filter(Review.user_id == user_id, Review.energy_id.isnot(None)).all()
     # Считаем количество отзывов
     total_rated = len(reviews)
     
@@ -107,6 +108,9 @@ def get_user_profile(db: Session, user_id: int) -> Dict[str, Any]:
             total_rating += rating.rating_value
             # Получаем энергетик
             energy = db.query(Energy).get(review.energy_id)
+            # Пропускаем если энергетик не найден
+            if energy is None:
+                continue
             # Получаем ID бренда
             brand_id = energy.brand_id
             # Добавляем оценку в статистику бренда
@@ -145,7 +149,7 @@ def get_user_reviews(db: Session, user_id: int, skip: int = 0, limit: int = 10):
     # Выполняем запрос с присоединением таблиц
     reviews = (
         db.query(Review)
-        .filter(Review.user_id == user_id)
+        .filter(Review.user_id == user_id, Review.energy_id.isnot(None))
         .join(Energy, Review.energy_id == Energy.id)
         .join(Brand, Energy.brand_id == Brand.id)
         .order_by(Review.created_at.desc())  # сортировка по убыванию (сначала новые)
@@ -158,6 +162,9 @@ def get_user_reviews(db: Session, user_id: int, skip: int = 0, limit: int = 10):
     for review in reviews:
         # Получаем энергетик
         energy = db.query(Energy).get(review.energy_id)
+        # Пропускаем если энергетик не найден
+        if energy is None:
+            continue
         # Получаем бренд
         brand = db.query(Brand).get(energy.brand_id)
         # Получаем оценки
@@ -177,9 +184,9 @@ def get_user_reviews(db: Session, user_id: int, skip: int = 0, limit: int = 10):
 # =============== READ TOTAL REVIEWS COUNT ===============
 def get_total_reviews(db: Session, user_id: int):
     """
-    Возвращает общее количество отзывов пользователя.
+    Возвращает общее количество отзывов пользователя (только к существующим энергетикам, не к предложкам).
     """
-    return db.query(Review).filter(Review.user_id == user_id).count()
+    return db.query(Review).filter(Review.user_id == user_id, Review.energy_id.isnot(None)).count()
 
 # =============== READ ALREADY REVIEW BY USER ===============
 def get_review_by_user_and_energy(db: Session, user_id: int, energy_id: int):

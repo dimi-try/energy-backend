@@ -16,8 +16,10 @@ class Review(Base):
     id = Column(Integer, primary_key=True, index=True)
     # Определяем поле user_id как внешний ключ
     user_id = Column(BigInteger, ForeignKey("users.id"), nullable=False)
-    # Определяем поле energy_id как внешний ключ
-    energy_id = Column(Integer, ForeignKey("energetics.id"), nullable=False)
+    # Определяем поле energy_id как внешний ключ (nullable для отзывов к предложкам)
+    energy_id = Column(Integer, ForeignKey("energetics.id"), nullable=True)
+    # Определяем поле suggestion_id как внешний ключ (для отзывов к предложкам)
+    suggestion_id = Column(Integer, ForeignKey("suggestions.id"), nullable=True)
     # Определяем поле review_text как текстовое
     review_text = Column(Text, nullable=True)
     # Определяем поле created_at с текущей датой по умолчанию
@@ -29,5 +31,7 @@ class Review(Base):
     user = relationship("User", back_populates="reviews")
     # Определяем связь с энергетиком
     energy = relationship("Energy", back_populates="reviews")
+    # Определяем связь с предложкой
+    suggestion = relationship("Suggestion", back_populates="review")
     # Определяем связь один-ко-многим с оценками
     ratings = relationship("Rating", back_populates="review", cascade="all, delete-orphan")

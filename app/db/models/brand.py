@@ -17,3 +17,5 @@ class Brand(Base):
 
     # Связь: один бренд -> много энергетиков
     energies = relationship("Energy", back_populates="brand", cascade="all, delete-orphan")
+    # Связь: один бренд -> много предложок
+    suggestions = relationship("Suggestion", back_populates="brand", cascade="all, delete-orphan")

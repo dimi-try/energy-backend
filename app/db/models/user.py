@@ -34,3 +34,6 @@ class User(Base):
         primaryjoin="User.id==foreign(Blacklist.user_id)",
         uselist=False
     )
+
+    # Связь один-ко-многим с предложками
+    suggestions = relationship("Suggestion", back_populates="user", cascade="all, delete-orphan")
