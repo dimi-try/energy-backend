@@ -16,8 +16,8 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
       UPLOAD_DIR_ENERGY: ${UPLOAD_DIR_ENERGY}
       UPLOAD_DIR_REVIEW: ${UPLOAD_DIR_REVIEW}
-      UPLOAD_DIR_USER: ${UPLOAD_DIR_USER}
       UPLOAD_DIR_SUGGESTION: ${UPLOAD_DIR_SUGGESTION}
+      UPLOAD_DIR_USER: ${UPLOAD_DIR_USER}
       ALLOWED_EXTENSIONS: ${ALLOWED_EXTENSIONS}
       MAX_FILE_SIZE: ${MAX_FILE_SIZE}
       BOT_TOKEN: ${BOT_TOKEN}
@@ -62,7 +62,7 @@ services:
     ports:
       - "${POSTGRES_HOST_PORT}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     networks:
       - network
 

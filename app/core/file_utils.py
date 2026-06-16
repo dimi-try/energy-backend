@@ -3,11 +3,12 @@ import uuid
 from fastapi import HTTPException, status, UploadFile
 from PIL import Image
 import io
-from app.core.config import UPLOAD_DIR_ENERGY, UPLOAD_DIR_REVIEW, UPLOAD_DIR_USER, ALLOWED_EXTENSIONS, MAX_FILE_SIZE
+from app.core.config import UPLOAD_DIR_ENERGY, UPLOAD_DIR_REVIEW, UPLOAD_DIR_SUGGESTION, UPLOAD_DIR_USER, ALLOWED_EXTENSIONS, MAX_FILE_SIZE
 
 # Создание директорий
 os.makedirs(UPLOAD_DIR_ENERGY, exist_ok=True)
 os.makedirs(UPLOAD_DIR_REVIEW, exist_ok=True)
+os.makedirs(UPLOAD_DIR_SUGGESTION, exist_ok=True)
 os.makedirs(UPLOAD_DIR_USER, exist_ok=True)
 
 def validate_file(file: UploadFile):
