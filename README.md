@@ -171,6 +171,28 @@ mkdir -p /app/alembic/versions
 python -m app.test.loader_data
 ```
 
+#### 🔍 Удаление ненужных или дублирующихся фотографий, неиспользуемых в БД
+
+Войти в контейнер
+```
+docker exec -it energy-backend-1 /bin/sh
+```
+
+Показать что будет удалено (безопасно)
+```
+python -m app.cleanup_unnecessary_images
+```
+
+Показать все используемые изображения
+```
+python -m app.cleanup_unnecessary_images --verbose
+```
+
+Фактически удалить ненужные файлы
+```
+python -m app.cleanup_unnecessary_images --execute
+```
+
 ---
 ## 🖼 Резервное копирование изображений
 
