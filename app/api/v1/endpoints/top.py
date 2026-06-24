@@ -21,10 +21,11 @@ def get_top_energies_endpoint(
     search_query: str = Query(None),                # Поиск по названию энергетика или бренда
     min_rating: float = Query(None, ge=0, le=10),   # Минимальный рейтинг
     max_rating: float = Query(None, ge=0, le=10),   # Максимальный рейтинг
+    category_id: int = Query(None, ge=1),           # Фильтр по категории
 ):
     """
     Эндпоинт для получения топа энергетиков с наивысшим 
-    средним рейтингом с фильтрацией по названию и рейтингу.
+    средним рейтингом с фильтрацией по названию, рейтингу и категории.
     Доступен всем пользователям (гостям, зарегистрированным 
     пользователям и администраторам).
     """
@@ -35,7 +36,8 @@ def get_top_energies_endpoint(
         offset=offset,
         search_query=search_query,
         min_rating=min_rating,
-        max_rating=max_rating
+        max_rating=max_rating,
+        category_id=category_id
     )
     # Возвращаем результаты
     return results
@@ -71,11 +73,12 @@ def get_total_energies_endpoint(
     search_query: str = Query(None),
     min_rating: float = Query(None, ge=0, le=10),
     max_rating: float = Query(None, ge=0, le=10),
+    category_id: int = Query(None, ge=1),
 ):
     """
     Эндпоинт для получения общего количества энергетиков с учетом фильтров.
     """
-    return {"total": get_total_energies(db, search_query, min_rating, max_rating)}
+    return {"total": get_total_energies(db, search_query, min_rating, max_rating, category_id)}
 
 # =============== READ TOTAL BRAND COUNT ===============
 @router.get("/brands/count/")

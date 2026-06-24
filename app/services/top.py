@@ -12,7 +12,8 @@ def get_top_energies(
     offset: int = 0,
     search_query: str = None,
     min_rating: float = None,
-    max_rating: float = None
+    max_rating: float = None,
+    category_id: int = None
 ):
     # Подзапрос для среднего рейтинга
     avg_rating_subquery = (
@@ -85,6 +86,8 @@ def get_top_energies(
         query = query.filter(avg_rating_subquery.c.avg_rating >= min_rating)
     if max_rating is not None:
         query = query.filter(avg_rating_subquery.c.avg_rating <= max_rating)
+    if category_id is not None:
+        query = query.filter(Energy.category_id == category_id)
 
     # Сортировка и пагинация
     energies = (
@@ -231,7 +234,7 @@ def get_top_brands(
     ]
 
 # =============== READ TOTAL ENERGY COUNT ===============
-def get_total_energies(db: Session, search_query: str = None, min_rating: float = None, max_rating: float = None):
+def get_total_energies(db: Session, search_query: str = None, min_rating: float = None, max_rating: float = None, category_id: int = None):
     avg_rating_subquery = (
         db.query(
             Review.energy_id,
@@ -263,6 +266,8 @@ def get_total_energies(db: Session, search_query: str = None, min_rating: float 
         query = query.filter(avg_rating_subquery.c.avg_rating >= min_rating)
     if max_rating is not None:
         query = query.filter(avg_rating_subquery.c.avg_rating <= max_rating)
+    if category_id is not None:
+        query = query.filter(Energy.category_id == category_id)
 
     return query.count()
 
