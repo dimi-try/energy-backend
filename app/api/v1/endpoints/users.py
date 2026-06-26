@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Header
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from fastapi.security import OAuth2PasswordBearer
 
-from app.core.auth import verify_token, verify_admin_token, get_current_user, get_user_role
-from app.core.config import UPLOAD_DIR_USER
+from app.core.auth import verify_token, verify_admin_token, get_current_user, get_user_role, create_access_token
+from app.core.config import UPLOAD_DIR_USER, BOT_API_KEY, TG_ADMIN_IDS
 from app.core.file_utils import upload_file
 
 from app.db.database import get_db
@@ -196,3 +196,39 @@ def count_users(
     verify_admin_token(token, db)
     total = get_total_users_admin(db)
     return {"total": total}
+
+# =============== ONLY BOT ENDPOINTS ===============
+
+# =============== GET ALL USERS (FOR BOT BROADCAST) ===============
+@router.get("/all/", response_model=List[User])
+def get_all_users_for_broadcast(
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """
+    Эндпоинт для получения списка всех пользователей без пагинации.
+    Доступен только администраторам. Используется ботом для рассылки.
+    """
+    verify_admin_token(token, db)
+    return get_all_users(db, skip=0, limit=10000)
+
+# Проверка API-ключа бота
+def verify_bot_api_key(x_api_key: Optional[str] = Header(None)):
+    """
+    Проверяет API-ключ бота в заголовке X-API-Key.
+    """
+    if not x_api_key or x_api_key != BOT_API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+    return True
+
+@router.get("/broadcast/", response_model=List[User])
+def get_users_for_bot_broadcast(
+    x_api_key: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Эндпоинт для получения списка всех пользователей ботом.
+    Авторизация через X-API-Key заголовок.
+    """
+    verify_bot_api_key(x_api_key)
+    return get_all_users(db, skip=0, limit=10000)

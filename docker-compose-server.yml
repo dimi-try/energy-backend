@@ -41,11 +41,13 @@ services:
     image: ${DOCKER_HUB_USER}/energy-charts-bot:latest
     environment:
       BOT_TOKEN: ${BOT_TOKEN}
+      BACKEND_URL: ${BACKEND_URL}
       FRONTEND_URL: ${FRONTEND_URL}
       BOT_WEBHOOK_BASE_URL: ${BOT_WEBHOOK_BASE_URL}
       BOT_PORT: ${BOT_PORT}
       BOT_USERNAME: ${BOT_USERNAME}
       NODE_ENV: ${NODE_ENV}
+      BOT_API_KEY: ${BOT_API_KEY}
     ports:
       - "${BOT_HOST_PORT}:2000"
     depends_on:
